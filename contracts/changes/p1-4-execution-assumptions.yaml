@@ -1,0 +1,45 @@
+change_id: p1-4-execution-assumptions
+proposed_by: bot-00-chief
+surface: contracts/events/fill_recorded.schema.json
+surfaces:
+- contracts/events/order_rejected.schema.json
+breaking: false
+version: "1.2.0"
+previous_version: "1.1.0"
+summary: >-
+  Additive optional field assumptions_json (string, default "") on FillRecorded
+  and OrderRejected: canonical JSON of the paper-simulation model (fee model,
+  latency distribution, drop probability, partial-fill cap, price basis,
+  curve-layout status) in force when the row was simulated (ROADMAP P1-4,
+  DECISIONS D-010).
+reversibility: two-way
+files:
+- src/pumpgrok/ledger/events.py
+- contracts/events/fill_recorded.schema.json
+- contracts/events/order_rejected.schema.json
+rationale: >-
+  A paper fill is only interpretable alongside the model that produced it.
+  Storing the record per row means a recalibration of any REVIEW constant is
+  visible in the ledger instead of silently changing what older fills mean.
+  The field has a default, so rows written before this change still validate
+  and no reader needs to change. Schemas were regenerated from
+  src/pumpgrok/ledger/events.py with scripts/generate-event-schemas.py.
+  Ledger payload bytes change for new rows, so replay pins moved; each moved
+  digest reproduces its previous value with the field stripped (CHANGELOG).
+pending_acks:
+- bot-00-chief
+- bot-01-scout
+- bot-02-risk
+- bot-03-whale
+- bot-04-sniper
+- bot-05-rug
+- bot-06-exit
+- bot-07-shill
+- bot-08-signal
+- bot-09-journal
+acknowledgements: []
+ack_note: >-
+  Non-breaking additive field; consumer acknowledgements are informational and
+  PENDING. No consumer rejection is outstanding.
+semantic_changes: []
+migration_note: ""
