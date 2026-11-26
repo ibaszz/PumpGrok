@@ -23,8 +23,8 @@ yes before implementation.
 |----|------|-------|------|------------|
 | P1-1 | Confirm the curve layout with `scripts/probe_curve_layout.py`; drop `[ASSUMED]` | `tools/onchain/curve_layout.py` | S (needs RPC access: approval for credentials if a paid RPC is used) | none |
 | P1-2 | Provenance envelope: `source`, `observed_ts`, `retrieved_ts`, `subject`, `quality`, `confidence`, `availability` on tool `meta` and datafeed ticks | `core/datasource.py`, `tools/_common.py`, `datafeed/*.py` | M | none |
-| P1-3 | Deterministic research-verdict mapping (REJECT / WATCH / RESEARCH / APPROVED_FOR_PAPER_SIMULATION) from `RiskDecision` + agent recommendations; agents can only lower it | `risk/engine/model.py` (read), new `risk/verdict.py`, tests | M | P2-3 for agent input; can ship risk-only first |
-| P1-4 | Trade-row attribution: optional `signal_id`, `dataset_id`, `execution_assumptions` (fee model version, latency params, drop prob) on order/fill payloads | `execution/paper_adapter/*.py`, `contracts/events/*.schema.json` | M | none |
+| P1-3 | **Done (risk-only), 2026-11-26.** Deterministic research-verdict mapping (REJECT / WATCH / RESEARCH / APPROVED_FOR_PAPER_SIMULATION); agents can only lower it. `risk/verdict.py`; surfaced by `risk.check_limits`. Open: feeding agent recommendations needs P2-3 | `risk/verdict.py`, `tools/risk/check_limits.py` | M | P2-3 for agent input |
+| P1-4 | **Partly done, 2026-11-26.** `assumptions_json` (fee model and params, latency distribution, drop probability, partial-fill cap, price basis, curve-layout status) on every `FillRecorded` and CONFIRMING `OrderRejected` row. Open: `signal_id` and `dataset_id` (P1-4b; `OrderRequest` is `extra="forbid"` with many callers, so it needs its own change; `decision_id` and `correlation_id` already link fill to decision and cycle) | `execution/assumptions.py`, `execution/paper_adapter/*.py`, `ledger/events.py`, `contracts/events/*.schema.json` | M | none |
 | P1-5 | Wire `events/sources.py` (backoff, staleness, cursors) into the event-mode supervisor | `supervisor/event_desk.py` | M | none |
 | P1-6 | Calibrate REVIEW fee/latency constants against recorded live data; record the calibration dataset id | `execution/fees.py`, `execution/latency.py`, `scripts/measure_replay.py` | M | recorded data (in progress) |
 | P1-7 | Scheduled ledger backup (host cron or compose sidecar) | `docs/OPERATIONS.md`, compose | S | P0-2 |
@@ -72,6 +72,14 @@ flowchart LR
 ```
 
 ## Implemented in this increment
+
+Increment 2 (branch `bot-00-chief/p1-attribution-verdicts`):
+
+- P1-3 done (risk-only): `src/pumpgrok/risk/verdict.py`, wired into `risk.check_limits`.
+- P1-4 partly done: execution assumptions on fills and CONFIRMING rejections; trading-smoke
+  pin re-pinned (CHANGELOG before/after lines; drift proven to be the new field only).
+
+Increment 1:
 
 - P0-1, P0-2 done (compose option): default `pumpgrok` serves the replay loop; live-paper
   root is opt-in profile `live-paper`, no restart, OD-04 flag from the operator shell. A

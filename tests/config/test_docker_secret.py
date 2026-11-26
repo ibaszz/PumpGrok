@@ -30,8 +30,9 @@ def test_loads_allowed_keys_and_skips_comments(tmp_path: Path) -> None:
     )
     env: dict[str, str] = {}
     loaded = load_docker_secret_env(path, env)
-    assert sorted(loaded) == ["DESK_GATEWAY_TOKEN_CHIEF", "PUMPGROK_RPC__ENDPOINTS", "PUMPGROK_X"]
-    assert env["DESK_GATEWAY_TOKEN_CHIEF"] == "tok en"
+    seat_key = "DESK_GATEWAY_TOKEN_CHIEF"  # pragma: allowlist secret: env var name
+    assert sorted(loaded) == [seat_key, "PUMPGROK_RPC__ENDPOINTS", "PUMPGROK_X"]
+    assert env[seat_key] == "tok en"  # pragma: allowlist secret: test fixture value
     assert env["PUMPGROK_X"] == "a=b"
 
 

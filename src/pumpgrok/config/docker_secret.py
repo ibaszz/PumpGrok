@@ -22,10 +22,10 @@ from pathlib import Path
 
 from pumpgrok.config.settings import ConfigError
 
-DOCKER_SECRET_PATH = Path("/run/secrets/pumpgrok_env")
+DOCKER_SECRET_PATH = Path("/run/secrets/pumpgrok_env")  # pragma: allowlist secret: path
 _KEY_RE = re.compile(r"^(PUMPGROK_|DESK_GATEWAY_)[A-Z0-9_]+$")
 
-__all__ = ["DOCKER_SECRET_PATH", "load_docker_secret_env"]
+__all__ = ["DOCKER_SECRET_PATH", "load_docker_secret_env"]  # pragma: allowlist secret: names
 
 
 def _unquote(value: str) -> str:

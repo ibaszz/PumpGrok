@@ -24,8 +24,8 @@ model parameter, not a result.
 | Post-graduation | Out of scope for the curve model | | Gap |
 
 Not modeled: MEV/sandwich, competing same-slot buyers, spread on post-graduation AMMs,
-RPC propagation differences. These belong in the "execution assumptions" record of every
-trade (ROADMAP P1-4).
+RPC propagation differences. Every fill names them in its `assumptions_json`
+`not_modeled` list (section 2).
 
 ## 2. Trade record
 
@@ -37,10 +37,24 @@ Ledger events (`contracts/events/*.schema.json`): `order_placed`, `order_rejecte
 
 Against the brief's per-trade field list: strategy id and parameter-set hash travel with
 promotion rows (`promotion/stages.py`); fees, sizes, fills, exit reason, and realized PnL
-are on the fill and close rows. Not yet on every trade row: an explicit `signal_id`, the
-dataset snapshot id for live-paper, and an `execution_assumptions` block naming the fee
-model version and latency parameters. ROADMAP P1-4 adds them without a schema-breaking
-change (new optional payload keys).
+are on the fill and close rows; `decision_id` and `correlation_id` link a fill to its risk
+decision and cycle.
+
+Execution assumptions (ROADMAP P1-4): every `FillRecorded` row, and every `OrderRejected`
+row decided at CONFIRMING, carries `assumptions_json`, canonical JSON built once per
+adapter by `execution/assumptions.py`:
+
+```json
+{"version":"1","mode":"paper_simulation","price_basis":"bonding_curve_reserves",
+ "curve_layout_status":"ASSUMED",
+ "fee_model":{"class":"FeeModelV2","venue_fee_bps":100,"base_fee_lamports":5000,...},
+ "latency":{"distribution":"lognormal_clipped","mu":"...","sigma":"0.5","min_s":"0.4","max_s":"20.0"},
+ "p_drop":"0.02","partial_fill_fraction":"0.02",
+ "not_modeled":["mev_sandwich","same_slot_competition","post_graduation_amm"]}
+```
+
+Rows written before this change validate with an empty value. Not yet on trade rows: an
+explicit `signal_id` and a live-paper dataset id (ROADMAP P1-4b).
 
 ## 3. Strategy lab (`src/pumpgrok/backtest/`)
 
@@ -81,15 +95,24 @@ Brief lifecycle mapping:
 Registered strategies (`strategies/base.py` `STRATEGY_IDS`): `legacy_screening`,
 `momentum_breakout`, `new_launch_sniper`, `mean_reversion`.
 
-## 5. Research verdicts (proposed)
+## 5. Research verdicts (`src/pumpgrok/risk/verdict.py`)
 
-The brief's outcomes map onto the existing gate without giving agents authority:
+`research_verdict(passed, reason, complete, agent_recommendations)` maps a risk outcome to
+one verdict. Order, most to least permissive: APPROVED_FOR_PAPER_SIMULATION > RESEARCH >
+WATCH > REJECT.
 
-| Outcome | Condition |
-|---------|-----------|
-| REJECT | any risk step fails that is not data-related, or an engine fallback/`checker` reject |
-| WATCH | risk passes structural checks but data is stale or incomplete (`data_stale`, missing fields) |
-| RESEARCH | passes risk, but at least one agent report lists an unresolved contradiction |
-| APPROVED_FOR_PAPER_SIMULATION | `RiskEngine` approves and no agent recommends REJECT |
+| Risk outcome | Category | Verdict |
+|--------------|----------|---------|
+| pass, every rule evaluated | `pass` | APPROVED_FOR_PAPER_SIMULATION |
+| pass, some rules skipped | `pass` | RESEARCH (nothing proven about skipped rules) |
+| `data_stale`, `breaker_open`, `reputation_degraded` | `data` | WATCH |
+| halts, kill switch, capacity and exposure limits, `no_position` | `desk_state` | WATCH |
+| `ledger_inconsistent`, `live_gate`, approval failures, `seat_may_trade` | `governance` | REJECT |
+| `creator_already_open`, `size_too_small`, `below_liquidity_floor` | `candidate` | REJECT |
+| any other reason | `unknown` | REJECT (fail closed) |
 
-Agents can move a candidate down this list, never up.
+Agent recommendations are limited to REJECT, WATCH, RESEARCH and can only lower the
+verdict. A test asserts every engine step id has a category, so a new step cannot fall to
+`unknown` unnoticed. `risk.check_limits` reports `research_verdict` and `verdict_category`;
+its engine rules skip, so its best possible verdict is RESEARCH. The verdict authorises
+nothing: orders still pass `RiskEngine.check` in the paper adapter.

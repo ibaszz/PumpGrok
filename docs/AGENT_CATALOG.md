@@ -84,4 +84,5 @@ AgentReport
 ```
 
 `recommendation` deliberately has no approval value: only the deterministic mapping in
-ROADMAP P1-3 can produce `APPROVED_FOR_PAPER_SIMULATION`.
+`src/pumpgrok/risk/verdict.py` (ROADMAP P1-3) can produce `APPROVED_FOR_PAPER_SIMULATION`; it
+rejects an agent recommendation of approval with `ValueError`.

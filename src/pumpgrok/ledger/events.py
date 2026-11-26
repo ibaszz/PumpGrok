@@ -116,6 +116,10 @@ class OrderRejected(_ClosedModel):
     quote_out: MoneyInt = Field(default=0, description="decision-time expected out units")
     other_amount_threshold: MoneyInt = Field(default=0, description="minimum acceptable out units")
     confirm_out: MoneyInt = Field(default=0, description="CONFIRMING-time recomputed out units")
+    assumptions_json: str = Field(
+        default="",
+        description="execution/assumptions.py canonical JSON; empty on rows written before P1-4",
+    )
 
 
 class FillRecorded(_ClosedModel):
@@ -141,6 +145,10 @@ class FillRecorded(_ClosedModel):
     curve_after_t: MoneyInt = Field(default=0, description="T1 CONFIRMING reserves, token units")
     route: str = Field(default="curve", description="fill basis; always curve (R38)")
     realised_slippage_bps: MoneyInt = 0
+    assumptions_json: str = Field(
+        default="",
+        description="execution/assumptions.py canonical JSON; empty on rows written before P1-4",
+    )
 
 
 class PositionOpened(_ClosedModel):

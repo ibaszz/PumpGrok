@@ -76,3 +76,22 @@ the OD-04 flag interpolated from the operator's shell and empty by default. The
 Consequence: `tests/hosted/test_compose_live_root.py` and
 `tests/safety/test_compose_hardening.py` assert the new topology. A long-running live-paper
 loop is a separate, code-level item (ROADMAP P0-2b).
+
+## D-009 Research verdict categories and the check_limits cap
+
+Context: P1-3 needs a deterministic mapping from risk reasons to research verdicts.
+Decision: data uncertainty and desk capacity/state map to WATCH (the candidate is not
+judged); governance and candidate-quality failures map to REJECT; unknown reasons REJECT.
+A pass caps at RESEARCH unless every rule was evaluated, so the structural
+`risk.check_limits` view can never read as approved.
+Consequence: a test pins full coverage of `STEP_IDS`; adding a step forces a category choice.
+
+## D-010 Execution assumptions travel on each row, not by reference
+
+Context: P1-4 must make each simulated fill traceable to its model.
+Decision: store the full canonical assumptions JSON (about 500 bytes) on each fill and
+CONFIRMING rejection, instead of a reference to a separate config row. Pydantic dumps
+defaults, so every new `FillRecorded`/`OrderRejected` payload gains the key; the
+trading-smoke pin was re-pinned after proving the payloads differ by that key only.
+Consequence: a row is self-describing even if config history is lost; ledger growth is
+small at paper volumes.

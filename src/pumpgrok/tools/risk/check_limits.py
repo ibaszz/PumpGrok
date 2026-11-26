@@ -18,6 +18,7 @@ from pumpgrok.core.risk_budget import RiskBudget
 from pumpgrok.core.side_effect import SideEffect
 from pumpgrok.core.tool import Tool, ToolInput, ToolOutput, ToolSpec, tool
 from pumpgrok.ledger.store import LedgerInconsistent, LedgerStore
+from pumpgrok.risk.verdict import research_verdict
 from pumpgrok.tools._common import MintStr, meta_now
 
 __all__ = [
@@ -69,6 +70,10 @@ class CheckLimitsOut(ToolOutput):
 
     approved: bool
     reason: str | None = None
+    #: Research verdict (risk/verdict.py). Skipped engine rules cap it at RESEARCH;
+    #: it authorises nothing.
+    research_verdict: str
+    verdict_category: str
     rules: list[dict[str, object]] = Field(default_factory=list)
     limits: dict[str, str | int] = Field(default_factory=dict)
 
@@ -114,6 +119,11 @@ async def run_check_limits(
         evaluations["seat_may_trade"] = "pass"
     rules = [_row(rule_id, evaluations[rule_id]) for rule_id in R34_RULE_IDS]
     first_fail = next((r["id"] for r in rules if r["status"] == "fail"), None)
+    verdict = research_verdict(
+        passed=first_fail is None,
+        reason=None if first_fail is None else str(first_fail),
+        complete=all(r["status"] != "skip" for r in rules),
+    )
     ambient = ambient_correlation()
     limits = {
         "max_trade_fraction": str(budget.max_trade_fraction),
@@ -130,6 +140,8 @@ async def run_check_limits(
         {
             "approved": first_fail is None,
             "reason": first_fail,
+            "research_verdict": verdict.verdict.value,
+            "verdict_category": verdict.category,
             "rules": rules,
             "limits": limits,
             "meta": meta_now(

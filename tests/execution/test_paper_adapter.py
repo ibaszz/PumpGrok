@@ -148,6 +148,11 @@ async def test_one_buy_flows_to_curve_priced_fill(tmp_path: Path) -> None:
     risk = json.loads(str(placed["payload"]["risk_json"]))
     assert risk["reason"] == "pass"
     assert risk["order_hash"] == order_hash_for(request)
+    # P1-4: the fill names the execution model it was simulated under.
+    assumptions = json.loads(str(body["assumptions_json"]))
+    assert body["assumptions_json"] == adapter._assumptions_json
+    assert assumptions["fee_model"]["class"] == type(adapter._fees).__name__
+    assert assumptions["price_basis"] == "bonding_curve_reserves"
 
 
 async def test_repeated_decision_returns_first_fill(tmp_path: Path) -> None:

@@ -11,6 +11,7 @@ from typing import Any, Literal
 from pumpgrok.core.adapter import ExecutionAdapter, ExecutionMode, OrderRequest, Position
 from pumpgrok.core.ids import Clock, IdFactory
 from pumpgrok.core.risk_budget import RiskBudget
+from pumpgrok.execution.assumptions import execution_assumptions_json
 from pumpgrok.execution.fees import FeeModel
 from pumpgrok.execution.latency import P_DROP
 from pumpgrok.execution.paper_adapter.batch import _BatchMixin
@@ -68,6 +69,9 @@ class PaperAdapter(
         self._price = price_source
         self._source = source
         self._p_drop = p_drop
+        self._assumptions_json = execution_assumptions_json(
+            fees=self._fees, p_drop=p_drop, partial_fill_fraction=self._budget.partial_fill_fraction
+        )
         self._inflight = _InflightOrders()
         self._cancelled: set[str] = set()
         self._last_price_ts: dict[str, float] = {}

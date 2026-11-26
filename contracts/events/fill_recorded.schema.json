@@ -126,6 +126,12 @@
       "default": 0,
       "title": "Realised Slippage Bps",
       "type": "integer"
+    },
+    "assumptions_json": {
+      "default": "",
+      "description": "execution/assumptions.py canonical JSON; empty on rows written before P1-4",
+      "title": "Assumptions Json",
+      "type": "string"
     }
   },
   "required": [

@@ -87,6 +87,28 @@ async def test_check_limits_missing_approval_fails_closed(tmp_path: Path) -> Non
     assert out.approved is False
     assert out.reason == "approval_missing"
     assert [r["id"] for r in out.rules] == list(R34_RULE_IDS)
+    assert out.research_verdict == "REJECT"
+    assert out.verdict_category == "governance"
+    store.close()
+
+
+async def test_check_limits_structural_pass_caps_at_research(tmp_path: Path) -> None:
+    """Engine rules skip in this view, so a pass never reads as approved for paper."""
+    store = _store(tmp_path)
+    tool = build_check_limits_tool(store, RiskBudget(), FixtureClock(start=START))
+    out = await tool(
+        CheckLimitsIn(
+            ticket_id=TICKET,
+            mint=MINT,
+            side="buy",
+            size_lamports=100_000_000,
+            approval_id="apr-01J0000000000000000000000A",
+        )
+    )
+    assert out.approved is True
+    assert any(r["status"] == "skip" for r in out.rules)
+    assert out.research_verdict == "RESEARCH"
+    assert out.verdict_category == "pass"
     store.close()
 
 

@@ -50,6 +50,7 @@ class SellFigures:
 
 class _SellStagesMixin:
     if TYPE_CHECKING:
+        _assumptions_json: str
         _clock: Clock
         _fees: FeeModel
         _ids: IdFactory
@@ -339,6 +340,7 @@ class _SellStagesMixin:
                 "curve_after_t": curve1.t_units,
                 "route": "curve",
                 "realised_slippage_bps": figures.slipped,
+                "assumptions_json": self._assumptions_json,
             },
         }
 

@@ -56,6 +56,12 @@
       "description": "CONFIRMING-time recomputed out units",
       "title": "Confirm Out",
       "type": "integer"
+    },
+    "assumptions_json": {
+      "default": "",
+      "description": "execution/assumptions.py canonical JSON; empty on rows written before P1-4",
+      "title": "Assumptions Json",
+      "type": "string"
     }
   },
   "required": [

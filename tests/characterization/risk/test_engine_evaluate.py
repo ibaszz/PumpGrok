@@ -55,7 +55,7 @@ SELL_SEAT = "bot-06-exit"
 
 #: Recorded replay pins (tests/fixtures/replay/pins and CHANGELOG Phase 11 entries).
 SMOKE_10M_EVENTS_HASH = "b69c29593954129b52a8c9ab1cad390441b7b356dd482b8c7a4345bea55ad32d"
-TRADING_SMOKE_EVENTS_HASH = "bdcbe2d321eea3e4ff814e91434f5ffb8ab84963cea1237c2f453500f5093e54"
+TRADING_SMOKE_EVENTS_HASH = "b7cdb7492a8c7fc47ceb3513d17753639e8c016c29777585b1a6d97dbff3d9a9"
 
 _HASH_LINE = re.compile(r"^events\.hash=([0-9a-f]{64})$", re.MULTILINE)
 _CHAIN_LINE = re.compile(r"^verify=CONSISTENT seq=(\d+) events=(\d+)$", re.MULTILINE)
