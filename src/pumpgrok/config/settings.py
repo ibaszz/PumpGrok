@@ -17,8 +17,9 @@ raises :class:`ConfigError`; the CLI maps it to exit 1.
 
 There is intentionally no wallet key field and no Jito field anywhere in
 this model (STRUCT-008). Secrets arrive only as ``PUMPGROK_*`` env vars at
-run time; ``.env`` files are never read (compose ``env_file`` injects into
-the process environment instead).
+run time; ``.env`` files are never read. In compose, the Docker secret
+``/run/secrets/pumpgrok_env`` is merged into the process environment first by
+``config/docker_secret.py``.
 """
 
 from __future__ import annotations

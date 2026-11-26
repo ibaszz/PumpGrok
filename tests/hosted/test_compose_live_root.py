@@ -1,4 +1,9 @@
-"""HOST-16: compose runs the live-data paper root; fixture only in replay profile."""
+"""HOST-16 as amended 2026-11-26 (docs/DECISIONS.md D-008).
+
+The default desk service serves the replay loop so its /healthz probe can pass; the
+live-data paper root is opt-in under the ``live-paper`` profile, never restarts, and
+its OD-04 review flag is never committed as ``approved``.
+"""
 
 from __future__ import annotations
 
@@ -9,25 +14,35 @@ import yaml
 _services = yaml.safe_load(Path("docker-compose.yml").read_text(encoding="utf-8"))["services"]
 
 
-def test_default_desk_runs_live_paper_root() -> None:
-    command = " ".join(str(x) for x in _services["pumpgrok"]["command"])
-    assert "--live-paper" in command
-    assert "--replay" not in command
-    assert "tests/fixtures/replay/smoke" not in command
+def _command(name: str) -> str:
+    return " ".join(str(x) for x in _services[name]["command"])
 
 
-def test_fixture_only_under_replay_profile() -> None:
-    replay = _services.get("pumpgrok-replay")
-    assert replay is not None
-    assert "replay" in replay["profiles"]
-    command = " ".join(str(x) for x in replay["command"])
+def test_default_desk_serves_replay_loop() -> None:
+    command = _command("pumpgrok")
+    assert "--serve" in command
     assert "--replay" in command
-    assert "tests/fixtures/replay/smoke" in command
+    assert "--live-paper" not in command
+    assert "profiles" not in _services["pumpgrok"]
 
 
-def test_live_paper_gated_on_od04_review() -> None:
-    env = _services["pumpgrok"]["environment"]
-    assert env.get("PUMPGROK_OD04_PROBE_REVIEW") == "approved"
+def test_live_paper_root_is_opt_in_profile() -> None:
+    live = _services["pumpgrok-live-paper"]
+    assert live["profiles"] == ["live-paper"]
+    assert "--live-paper" in _command("pumpgrok-live-paper")
+    assert "--replay" not in _command("pumpgrok-live-paper")
+    # The root exits after building; a restart policy would loop it.
+    assert str(live["restart"]) == "no"
+    assert "ports" not in live
+    assert "healthcheck" not in live
+
+
+def test_od04_review_never_committed_as_approved() -> None:
+    for name, svc in _services.items():
+        value = str(svc.get("environment", {}).get("PUMPGROK_OD04_PROBE_REVIEW", ""))
+        assert "approved" not in value, name
+    live_env = _services["pumpgrok-live-paper"]["environment"]
+    assert live_env["PUMPGROK_OD04_PROBE_REVIEW"] == "${PUMPGROK_OD04_PROBE_REVIEW:-}"
 
 
 def test_gateway_has_no_fixture_command() -> None:

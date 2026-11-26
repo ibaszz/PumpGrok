@@ -23,6 +23,7 @@ from pathlib import Path
 
 from desk_gateway.config import GatewayConfig, load_tokens, validate_gateway_bind, validate_tokens
 from desk_gateway.server import GatewayRefusedError, close_server, create_server
+from pumpgrok.config.docker_secret import load_docker_secret_env
 from pumpgrok.config.settings import ConfigError, Settings, current_profile, load_settings
 from pumpgrok.contracts.projection import default_contracts_dir, short_to_seat
 from pumpgrok.ledger.paths import DESK_DATA_DIR, PAPER_LEDGER_PATH
@@ -62,6 +63,7 @@ def _port(raw: str | None) -> int:
 def main() -> int:
     """Load settings, build the registry from them, and serve until interrupted."""
     try:
+        load_docker_secret_env()
         settings = load_settings()
     except ConfigError as exc:
         _say(str(exc))

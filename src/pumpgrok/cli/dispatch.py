@@ -17,6 +17,7 @@ from pumpgrok.cli.promotion_verb import _promotion_verb
 from pumpgrok.cli.verbs_ops import _doctor_verb, _live_verb, _report_verb, _verify_verb
 from pumpgrok.cli.verbs_state import _killswitch, _paper, _run, _state, _ticket_verb
 from pumpgrok.cli.wiring import _find_only, _tools_entry, _verb_label
+from pumpgrok.config.docker_secret import load_docker_secret_env
 from pumpgrok.config.settings import (
     ConfigError,
     Settings,
@@ -77,6 +78,7 @@ def _route(args: argparse.Namespace, settings: Settings) -> int:
 
 def _dispatch(argv: Sequence[str]) -> int:
     refuse_cli_secrets(argv)
+    load_docker_secret_env()
     if argv and argv[0] == "tools":
         return _tools_entry(list(argv[1:]))
     args = build_parser().parse_args(list(argv))

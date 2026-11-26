@@ -180,6 +180,28 @@ def doctor_signer_lines(settings: Settings, *, attestation: str | None = None) -
     return [f"info  signer attestation={attestation} source=settings"]
 
 
+#: Local files that may hold PUMPGROK_* secrets (repo-root relative).
+SECRET_ENV_FILES: tuple[Path, ...] = (Path(".env"), Path(".secrets/pumpgrok.env"))
+
+
+def secret_file_permission_lines(paths: tuple[Path, ...] = SECRET_ENV_FILES) -> list[str]:
+    """Warn when a secret env file grants any group or other bit. Reads mode only, never content."""
+    lines: list[str] = []
+    for path in paths:
+        try:
+            mode = path.stat().st_mode & 0o777
+        except FileNotFoundError:
+            continue
+        except OSError:
+            lines.append(f"warn  secret-file {path} unreadable mode")
+            continue
+        if mode & 0o077:
+            lines.append(f"warn  secret-file {path} mode={mode:o}: run `chmod 600 {path}`")
+        else:
+            lines.append(f"ok    secret-file {path} mode={mode:o}")
+    return lines
+
+
 def doctor_report(settings: Settings, *, wake_mode: str = "cadence") -> list[str]:
     """Lines for stdout: effective mode, one status line per subsystem, endpoint probes, summary."""
     statuses = subsystem_statuses()
@@ -195,6 +217,7 @@ def doctor_report(settings: Settings, *, wake_mode: str = "cadence") -> list[str
     lines.extend(doctor_stage_lines(settings))
     lines.extend(doctor_kills_lines(settings))
     lines.extend(doctor_signer_lines(settings))
+    lines.extend(secret_file_permission_lines())
     port = settings.health.port
     if port <= 0:
         lines.append("warn  /healthz (not served: health.port=0, only `run --serve` binds a port)")

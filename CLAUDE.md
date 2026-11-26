@@ -61,7 +61,6 @@ One supervisor tick drives ten seats in roster order; risk approves every order
 and paper fills settle against the curve account.
 
 - Ten-seat tick loop lives in `src/pumpgrok/supervisor/scheduler/supervisor.py`; due seats start in roster order each tick (`TICK_S = 1.0`, `src/pumpgrok/supervisor/scheduler/supervisor.py:36-37`).
-- One-shot replay: `run_once_replay` in `src/pumpgrok/supervisor/scheduler/serve.py` calls `open_replay_runtime` in `src/pumpgrok/supervisor/scheduler/replay_runtime.py`, which builds a `PaperAdapter` (`replay_runtime.py:222`).
 - One-shot replay: `run_once_replay` in `src/pumpgrok/supervisor/scheduler/serve.py` calls `open_replay_runtime` in `src/pumpgrok/supervisor/scheduler/replay_runtime.py`, which builds a `PaperAdapter` (inside `open_replay_runtime`).
 - Pre-graduation fills come from bonding-curve reserves via `src/pumpgrok/execution/paper_adapter/adapter.py`, never from a quote.
 - `src/pumpgrok/tools/market/price.py` reads the curve account with `getAccountInfo` and decodes it with `src/pumpgrok/tools/onchain/curve_layout.py`; it has no Jupiter path.
@@ -92,15 +91,10 @@ Planning state and per-task evidence live outside the product tree.
 
 ## Safety
 
-Paper-only by default; live mode refuses to start unless every precondition in
-`src/pumpgrok/cli/verbs_state.py` is met.
-
-- `run` accepts `--mode paper --once --replay <dir>` (one cycle) and `--serve --replay <dir>` (loop); `--record`, `--duration` and other combinations exit not-implemented (`src/pumpgrok/cli/verbs_state.py`, `_run`, lines 68-83).
-- `run --mode live` evaluates `LiveGate` in `src/pumpgrok/cli/verbs_state.py` (`_run`, lines 57-67) and refuses with exit code `3` (`EXIT_LIVE` in `src/pumpgrok/cli/codes.py`) when any precondition is unmet.
 Paper-only by default; live mode refuses to start unless every precondition defined in
 `src/pumpgrok/execution/live/live_gate.py` is met (`_run` in `src/pumpgrok/cli/verbs_state.py` enforces it).
 
-- `run` accepts `--mode paper --once --replay <dir>` (one cycle) and `--serve --replay <dir>` (loop); `--record`, `--duration` and other combinations exit not-implemented (`src/pumpgrok/cli/verbs_state.py`, `_run`).
+- `run` accepts `--mode paper --once --replay <dir>` (one cycle), `--serve --replay <dir>` (loop), `--record <DATASET>` (seals a dataset from `--replay <dir>` or the smoke fixture) and `--live-paper` (builds the live-data paper desk, places nothing); `--duration` and other combinations exit not-implemented (`src/pumpgrok/cli/verbs_state.py`, `_run_outcome`).
 - `run --mode live` evaluates `LiveGate` in `src/pumpgrok/cli/verbs_state.py` (`_run`) and refuses with exit code `3` (`EXIT_LIVE` in `src/pumpgrok/cli/codes.py`) when any precondition is unmet.
 - Secrets arrive only as `PUMPGROK_*` env vars per `src/pumpgrok/config/settings.py`; key-bearing endpoint values are refused at startup (see `RpcSettings` in `src/pumpgrok/config/settings.py`).
 - Paid-provider keys travel in `api_key` and are sent as a header, never embedded in endpoint URLs (see `src/pumpgrok/config/settings.py`).
@@ -111,7 +105,8 @@ Assumptions and path differences the reader must not mistake for verified fact.
 
 - Curve decoding uses the `[ASSUMED]` layout in `src/pumpgrok/tools/onchain/curve_layout.py` until a live probe confirms it (see `scripts/probe_curve_layout.py`).
 - `run --once --replay` exercises the `PaperAdapter` path via `run_once_replay` in `src/pumpgrok/supervisor/scheduler/serve.py`, while `run_replay` in `src/pumpgrok/replay/runner.py` writes the checkpoint verdict row first and does not run the paper adapter.
-- `run --record` is not implemented and exits `EXIT_NOT_IMPLEMENTED` (`src/pumpgrok/cli/codes.py`) from `_run` in `src/pumpgrok/cli/verbs_state.py`.
+- `run --duration` is not implemented and exits `EXIT_NOT_IMPLEMENTED` (`src/pumpgrok/cli/codes.py`) from `_run_outcome` in `src/pumpgrok/cli/verbs_state.py`.
+- `run --live-paper` requires `PUMPGROK_OD04_PROBE_REVIEW=approved` and its place callback is the `_no_place` stub; in compose it runs only as the opt-in `pumpgrok-live-paper` service (profile `live-paper`), with the flag taken from the operator's shell (`docs/DECISIONS.md` D-008).
 
 ## v4 event mode
 

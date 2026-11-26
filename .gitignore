@@ -18,3 +18,9 @@ prompts-assembled/*.xml.tmp
 
 .coverage
 coverage.xml
+
+# Large local live recordings (124-605 MB each); keep out of git history.
+# Smaller recordings under tests/fixtures/replay/ stay committable.
+tests/fixtures/replay/live-06/
+tests/fixtures/replay/live-07/
+tests/fixtures/replay/live-08/

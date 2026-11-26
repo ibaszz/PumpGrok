@@ -2,7 +2,6 @@
 
 ![PumpGrok banner](banner.jpg)
 
-PumpGrok is a ten-seat Solana memecoin trading desk packaged as agent instructions, 35 skills, a hard security constitution, and read-only Python helpers. It is loaded into a host agent runtime (Grok Bot, Cursor, Claude Code, or Grok Build). It is not a trading bot, exchange client, or signer: private keys never enter the system, and only a human-approved ticket may be sent.
 PumpGrok is a ten-seat Solana memecoin trading desk packaged as agent instructions, 35 skills, a hard security constitution, and Python helpers that never sign or send. The helpers write only local files, mainly under `var/`. It is loaded into a host agent runtime (Grok Bot, Cursor, Claude Code, or Grok Build). It is not a trading bot, exchange client, or signer: private keys never enter the system, and only a human-approved ticket may be sent.
 
 Version 0.1.0, the package version (see `pyproject.toml`).
@@ -10,7 +9,6 @@ Version 0.1.0, the package version (see `pyproject.toml`).
 ## Capabilities
 
 - Ten specialist seats: CHIEF, SCOUT, RISK, WHALE, SNIPER, RUG, EXIT, SHILL, SIGNAL, JOURNAL (`agents/`)
-- 35 skills covering desk constitution, ticket lifecycle, risk audit, Jupiter routing, discovery, journal conventions, paper-trading discipline, safety scoring, and a vendored dry-run screening engine (`skills/grokbot-pipeline`)
 - 35 skills covering desk constitution, ticket lifecycle, risk audit, Jupiter routing, discovery, journal conventions, paper-trading discipline, safety scoring, and the screening-engine procedure (`skills/grokbot-pipeline`; the vendored tree is retired, see `docs/VENDOR_PIN.md`)
 - Always-on desk rule `rules/pumpgrok-team.mdc` (RISK veto, human approval by ticket ID, single-send, no private keys)
 - Operator CLI (`pumpgrok`) that never signs or sends. It reads Jupiter quotes, mint/freeze authority, priority fees, and holder concentration; `ticket next` and `create` append a row to the paper ledger `var/ledger.sqlite`. Paper-trade commands place no trades and refuse with code `unavailable` until the curve reader is verified, but first they create the local folders, load or create the binding key, open the ledger and seed its starting equity. `scout pipeline` is registered but not implemented
@@ -29,7 +27,6 @@ A committed `uv.lock` pins every dependency. No API keys are required for the pu
 
 ## Setup and usage
 
-Full Grok Bot bootstrap (clone, folders, skills, ten seats, Trading Floor, desk record) is in [SETUP.md](SETUP.md). That flow is read-only: no keys, no real trades.
 Full Grok Bot bootstrap (clone, folders, skills, ten seats, Trading Floor, desk record) is in [SETUP.md](SETUP.md). That flow writes only local folders and files, with no keys and no real trades.
 
 From this repository:
@@ -75,6 +72,7 @@ Cursor / Claude Code / Grok Build load `skills/`, `agents/`, and `rules/` from t
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — module boundaries, ticket flow, persistence
 - [SETUP.md](SETUP.md) — bootstrap procedure
+- [docs/REPOSITORY_AUDIT.md](docs/REPOSITORY_AUDIT.md) — 2026-11-26 audit; links the runtime architecture, data flow, agent catalog, trading research, security audit, operations, roadmap and decisions docs
 - [LICENSE](LICENSE) — GNU Affero General Public License v3.0
 
 Subdirectory READMEs: [agents/README.md](agents/README.md), [skills/README.md](skills/README.md), [rules/README.md](rules/README.md), [scripts/README.md](scripts/README.md).
@@ -87,4 +85,4 @@ PumpGrok is licensed under the GNU Affero General Public License v3.0. See [LICE
 
 ## v4 event mode (observability and hosted)
 
-The desk has two wake modes. Cadence polls on a fixed interval (default). Event mode (`wake_mode=event`, `pumpgrok run --wake-mode event`) dispatches seats from the event bus instead of polling. `pumpgrok doctor` reports the v4 runtime read-only: event bus depth, source states, Grok budget windows, strategy stages, active kills, and signer attestation (name and source only, never a secret value). `var/health.json` and the metrics registry carry the event, strategy, and promotion sections alongside the existing health body. Alert rules live in `docs/observability/alerts.yaml` and name only metrics the registry exposes. Hosted runs use a single absolute `PUMPGROK_STATE_DIR` with a named volume in compose; the replay demo profile runs the bundled fixture while the default service runs the live-data paper root. Live trading stays refused: `run --mode live` exits 3.
+The desk has two wake modes. Cadence polls on a fixed interval (default). Event mode (`wake_mode=event`, `pumpgrok run --wake-mode event`) dispatches seats from the event bus instead of polling. `pumpgrok doctor` reports the v4 runtime read-only: event bus depth, source states, Grok budget windows, strategy stages, active kills, and signer attestation (name and source only, never a secret value). `var/health.json` and the metrics registry carry the event, strategy, and promotion sections alongside the existing health body. Alert rules live in `docs/observability/alerts.yaml` and name only metrics the registry exposes. Hosted runs use a single absolute `PUMPGROK_STATE_DIR` with a named volume in compose; the default service serves the bundled replay fixture, and the live-data paper root is the opt-in `live-paper` profile (`docs/DECISIONS.md` D-008). Live trading stays refused: `run --mode live` exits 3.
