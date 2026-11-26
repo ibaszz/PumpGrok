@@ -24,6 +24,8 @@ from typing import Any
 
 from pumpgrok.config.settings import FilterSettings
 from pumpgrok.engine.models import Token
+from collections import deque
+
 from pumpgrok.engine.monitor import CURVE_COMPLETION_LAMPORTS, passes_filter
 from pumpgrok.replay.clock import parse_ts_utc
 
@@ -97,6 +99,37 @@ def tick_to_candidate(event: Mapping[str, Any]) -> Token:
     )
 
 
+MOMENTUM_WINDOW_SECONDS = 60.0
+
+
+class CurveRiseTracker:
+    """Trailing per-mint curve rise, from the tick history the replay already walks.
+
+    ``observe`` returns the fractional rise of ``sol_in_curve`` over the last
+    ``window`` seconds, or None while there is no tick at or before that edge —
+    the momentum gate then fails closed instead of assuming a flat curve.
+
+    ponytail: history is never pruned per mint; it lives as long as one replay
+    run. Prune idle mints if this ever drives a multi-day live process.
+    """
+
+    def __init__(self, window: float = MOMENTUM_WINDOW_SECONDS) -> None:
+        self.window = window
+        self.history: dict[str, deque[tuple[float, int]]] = {}
+
+    def observe(self, mint: str, now: float, sol_in_curve: int) -> float | None:
+        if sol_in_curve <= 0:
+            return None
+        series = self.history.setdefault(mint, deque())
+        series.append((now, sol_in_curve))
+        while len(series) > 1 and series[1][0] <= now - self.window:
+            series.popleft()
+        base_ts, base_sol = series[0]
+        if base_ts > now - self.window or base_sol <= 0:
+            return None
+        return (sol_in_curve - base_sol) / base_sol
+
+
 def decide_token(token: Token, filter_cfg: FilterSettings, now: float) -> EngineDecision:
     """Run the only offline stage over one candidate."""
     passed, reason = passes_filter(token, filter_cfg, now)
@@ -110,9 +143,14 @@ def evaluate_candidates(
 ) -> list[CandidateVerdict]:
     """Judge every tick as its own candidate, at that tick's own time, in stored order."""
     verdicts: list[CandidateVerdict] = []
+    # The rise is only computed for a gate that reads it: with the gate off the
+    # candidate stays field-for-field what the fixture recorded.
+    tracker = CurveRiseTracker() if filter_cfg.min_curve_rise_60s > 0 else None
     for event in events:
         ts = parse_ts_utc(str(event["ts_utc"]))
         token = tick_to_candidate(event)
+        if tracker is not None:
+            token.curve_rise_60s = tracker.observe(token.mint, ts, token.sol_in_curve)
         verdicts.append(
             CandidateVerdict(ts=ts, token=token, verdict=decide_token(token, filter_cfg, ts))
         )

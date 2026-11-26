@@ -144,6 +144,11 @@ def passes_filter(token: Token, cfg: FilterSettings, now: float) -> tuple[bool, 
         return False, "data_unavailable"
     if token.unique_buyers < cfg.min_unique_buyers:
         return False, "few_buyers"
+    if cfg.min_curve_rise_60s > 0:
+        if token.curve_rise_60s is None:
+            return False, "no_momentum_data"
+        if token.curve_rise_60s < cfg.min_curve_rise_60s:
+            return False, "curve_not_rising"
     return True, "ok"
 
 

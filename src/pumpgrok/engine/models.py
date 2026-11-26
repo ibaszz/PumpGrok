@@ -53,6 +53,9 @@ class Token(BaseModel):
     curve_progress: float = 0.0  # 0..1, share of the curve already bought
     market_cap_sol: int = 0  # lamports (INT-01: integer money)
     sol_in_curve: int = 0  # lamports (INT-01: integer money)
+    # Fractional rise of ``sol_in_curve`` over the trailing momentum window at
+    # this tick. None means no history (fail closed while the gate is on).
+    curve_rise_60s: float | None = None
 
     def age_seconds(self, now: float) -> float:
         if not self.created_timestamp:

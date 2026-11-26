@@ -19,6 +19,9 @@ class FilterSettings(BaseModel):
     max_curve_progress: float = Field(default=0.40, ge=0)
     require_metadata: bool = True
     min_age_seconds: float = Field(default=120.0, ge=0)
+    # Curve must still rise this much (fraction) over the trailing 60 s.
+    # 0 disables the check; >0 without tick history rejects (fail closed).
+    min_curve_rise_60s: float = Field(default=0.0, ge=0)
     max_risk_score: float = Field(default=7.0, ge=0)
     min_total_score: float = Field(default=0.65, ge=0)
     block_creator_after_rugs: int = Field(default=1, ge=0)

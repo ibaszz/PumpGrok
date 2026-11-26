@@ -52,7 +52,7 @@ PINNED_SECTION_DIGESTS: dict[str, str] = {
     "rpc": "d0e8d2cd69a3d9c5bbcd3de13cd295599d2cc4311f01f0e9248133812c21d29d",
     "grok": "2e4c9dc6ad91eb80b07531dd3ad66ca5386430bc3c56ee3cba0407903747b00b",
     "jupiter": "e31754b27eae6e4697ea81a6dc9cf0f9570cd034b5c52c78b7a8eaaf675a043b",
-    "filter": "72883161750cfff0c4689337fd3b1814ddee7e64ccf3844b49dde34b7520ef66",
+    "filter": "4a5335133643d6e6ea2b051d7b44d00b91db64629f65061fef4998c9c553bfdd",
     "safety": "7f5fe1b95a23f9c84038b31fb66d18b2bf71b81e9139b82b01f7bf03e9e6728e",
     "scoring": "402e94eb3d94528d8823e3682ad940df7f9abc18800edd8da3ac86d5856cde08",
     "exits": "71ec150216dbc1ff0105b35e104b7dae4a64ce3845bb06c88f5c3599e22bfff9",
