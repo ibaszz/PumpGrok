@@ -341,6 +341,7 @@ class _SellStagesMixin:
                 "route": "curve",
                 "realised_slippage_bps": figures.slipped,
                 **self._attribution,
+                "signal_id": request.signal_id or "",
             },
         }
 

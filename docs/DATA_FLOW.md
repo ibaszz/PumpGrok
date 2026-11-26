@@ -69,6 +69,7 @@ never include endpoint URLs or header values (`tools/onchain/rpc.py`).
 | Observed time | fixture tick `ts_utc`; ledger `ts_utc` |
 | Freshness | `core/datasource.py` `Freshness`; `risk/feed_health.py`; `DataStaleBreaker` |
 | Correlation | `events.correlation_id`; `core/correlation.py` |
+| Signal identity | `signal_id` on `OrderRequest` / `exec.place` and on `FillRecorded` / `OrderRejected`: idempotency key of a `signal` JournalNote holding an `AgentReport` (`engine/report.py`, P1-4b) |
 | Dataset identity | sealed manifest hash (`backtest/manifest.py`, `replay/fixtures.py`); on each replay `FillRecorded` / CONFIRMING `OrderRejected` as `dataset_id` = `dataset_digest` (P1-4b) |
 | Retrieval time, observed time, subject, quality | Tool `meta` (`core/tool.py` `ToolMeta`): `fetched_at`, `observed_at` (ledger reads only; `None` when the source does not report it), `subject` (from the input `mint` / `creator` / `ticket_id`), `quality` (`ledger`, `onchain`, `onchain_assumed`, `simulated`, `derived`, `local`; declared on each `ToolSpec`). Availability: `meta.stale` on an output, `DataStale` / `DataBlind` when unavailable (ROADMAP P1-2) |
 | Confidence per datum | Not on raw data. Belongs to analysis outputs (wallet scores, P2-1) |

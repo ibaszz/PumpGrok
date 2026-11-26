@@ -9,9 +9,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from pumpgrok.backtest.manifest import dataset_digest
+from pumpgrok.backtest.manifest import dataset_digest, filter_settings_hash
 from pumpgrok.backtest.results import FillDetail
-from pumpgrok.config.settings import ExitsSettings
+from pumpgrok.config.settings import ExitsSettings, FilterSettings
 from pumpgrok.core.bot import BotManifest
 from pumpgrok.core.ids import Clock, IdFactory
 from pumpgrok.core.manifests import load_bot_manifests
@@ -93,6 +93,9 @@ class _ReplayTrading:
     exits: ExitRules | None = None
     refresh_marks: Callable[[], Awaitable[None]] | None = None
     store: LedgerStore | None = None
+    #: Signal provenance (P1-4b): the dataset digest and the filter-settings hash.
+    dataset_id: str = ""
+    engine_version: str = ""
 
 
 def _fill_payload_for(
@@ -172,6 +175,8 @@ class ReplayRuntime:
     candidates: list[CandidateVerdict]
     curves: FixtureCurveSource
     exits: ExitsSettings
+    dataset_id: str = ""
+    engine_version: str = ""
 
 
 def open_replay_runtime(
@@ -215,6 +220,10 @@ def open_replay_runtime(
     ids = IdFactory(clock, rng)
     budget = budget if budget is not None else RiskBudget()
     limits = limits if limits is not None else EngineLimits()
+    dataset_id = dataset_digest(dataset_dir)
+    engine_version = (
+        filter_settings_hash(filter_cfg) if isinstance(filter_cfg, FilterSettings) else "unknown"
+    )
     store = LedgerStore(str(target))
     try:
         store.set_meta("initial_equity_lamports", str(budget.paper_equity_lamports))
@@ -243,7 +252,7 @@ def open_replay_runtime(
             # The fixture is the venue: no random tx drop, so a recorded buy fills.
             p_drop=0.0,
             source="replay",
-            dataset_id=dataset_digest(dataset_dir),
+            dataset_id=dataset_id,
         )
         registry, _audits = build_registry(clock=clock, rng=make_rng(seed))
         registry.register(build_place_tool(adapter, lambda: budget, clock))
@@ -274,6 +283,8 @@ def open_replay_runtime(
         candidates=candidates,
         curves=curves,
         exits=exits if exits is not None else ExitsSettings(),
+        dataset_id=dataset_id,
+        engine_version=engine_version,
     )
 
 

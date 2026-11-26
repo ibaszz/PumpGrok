@@ -1,3 +1,7 @@
+P1-4b (signal id): smoke-10m events.hash before: b69c29593954129b52a8c9ab1cad390441b7b356dd482b8c7a4345bea55ad32d
+P1-4b (signal id): smoke-10m events.hash after: b69c29593954129b52a8c9ab1cad390441b7b356dd482b8c7a4345bea55ad32d
+P1-4b (signal id): trading-smoke events.hash before: 5d55403d082a1341ddb664b5e1fb3df5cf52a29f3aeca39bef613efd47b6682d
+P1-4b (signal id): trading-smoke events.hash after: b90a8027895b6394e59627ad6af7f9e08905e9d4943f63f5ead680e7eadb2f28
 P1-4b (dataset id): smoke-10m events.hash before: b69c29593954129b52a8c9ab1cad390441b7b356dd482b8c7a4345bea55ad32d
 P1-4b (dataset id): smoke-10m events.hash after: b69c29593954129b52a8c9ab1cad390441b7b356dd482b8c7a4345bea55ad32d
 P1-4b (dataset id): trading-smoke events.hash before: b7cdb7492a8c7fc47ceb3513d17753639e8c016c29777585b1a6d97dbff3d9a9
@@ -27,10 +31,11 @@ Phase 15: trading-smoke events.hash after: bdcbe2d321eea3e4ff814e91434f5ffb8ab84
 All notable changes to PumpGrok are recorded here. The format follows Keep a Changelog.
 
 
-## [Unreleased] - Audit increment (P0 fixes, P1-2, P1-3, P1-4, P1-4b)
+## [Unreleased] - Audit increment (P0 fixes, P1-2, P1-3, P1-4, P1-4b, P2-3 partial)
 
 ### Added
 
+- `AgentReport` and persisted signals (`src/pumpgrok/engine/report.py`, P2-3 partial): a report stored as a `signal` JournalNote; its idempotency key is the `signal_id`. `OrderRequest` and `exec.place` accept an optional `signal_id`; the paper adapter refuses an id that is not a stored signal (`signal_unknown`, ACCEPTED) and stamps it on `FillRecorded` / `OrderRejected`. The replay sniper records the engine's BUY verdict as a signal and cites it. Trading-smoke gains two signal rows (seq 11 to 13): with those rows removed and `signal_id` stripped, all 11 earlier rows match their pinned digests; the 26 characterization digests match their old values with `signal_id` stripped (DECISIONS D-013).
 - `FillRecorded` and `OrderRejected` rows carry `dataset_id` (P1-4b): the `backtest/manifest.py` `dataset_digest` of the replay dataset, the same digest backtest run ids pin; empty outside replay. The trading-smoke pin, its three fill/reject row digests, the 26 paper-adapter characterization digests and `TRADING_SMOKE_EVENTS_HASH` were re-pinned; all pass against their previous values with `dataset_id` stripped.
 - Tool provenance envelope (P1-2): `ToolMeta` gains `observed_at`, `subject` and `quality`; every production `ToolSpec` declares `quality` and the `tool()` wrapper stamps it with the call's subject (`src/pumpgrok/core/tool.py`, DECISIONS D-011).
 - `FillRecorded` and CONFIRMING-stage `OrderRejected` rows carry `assumptions_json`: the fee model, latency distribution, drop probability, partial-fill cap, price basis and curve-layout status the paper adapter simulated under (`src/pumpgrok/execution/assumptions.py`). Rows written earlier validate with an empty value. The trading-smoke pin moves because of this field only: stripping `assumptions_json` from the new payloads reproduces every previously pinned row digest. The 26 paper-adapter characterization digests (`tests/characterization/execution/test_paper_adapter_{batch,confirm,sell}.py`) and `TRADING_SMOKE_EVENTS_HASH` in `tests/characterization/risk/test_engine_evaluate.py` were re-pinned for the same reason; all 27 pass against their old values when the field is stripped.

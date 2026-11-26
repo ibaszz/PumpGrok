@@ -63,11 +63,13 @@ Shared contract from `engine/agents/base.py`:
 
 Decision: no new seats in the first increment (see [DECISIONS.md](DECISIONS.md) D-003).
 
-## 4. Standard report contract (proposed)
+## 4. Standard report contract
 
-Engine agents already return typed models. Seat agents return prose to the host. The
-proposed common envelope, to be added as a pydantic model next to `engine/models.py` and
-emitted through `journal.append`:
+Implemented as `AgentReport` in `src/pumpgrok/engine/report.py` (P2-3, D-013). A report
+stored with `record_signal` is a `JournalNote` (`note_kind = signal`, `text` = the report's
+canonical JSON) whose idempotency key is the `signal_id` an order may cite. Today only the
+replay sniper path writes signals (the engine's BUY verdict, as `bot-08-signal`); seats and
+engine LLM agents do not emit reports yet. Envelope:
 
 ```text
 AgentReport
@@ -75,7 +77,7 @@ AgentReport
   agent_version: str      # prompt hash (prompts are code constants)
   subject: str            # mint or wallet
   ts_utc: str             # injected clock
-  findings: list[Finding] # claim, evidence refs (ledger seq / tool call id), confidence 0..1
+  findings: list[Finding] # claim, evidence refs, confidence 0..1 or null (null unless measured)
   unknowns: list[str]
   assumptions: list[str]
   contradictions: list[str]

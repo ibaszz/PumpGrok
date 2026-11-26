@@ -49,6 +49,8 @@ class PlaceIn(ToolInput):
     quote_id: str | None = None
     # Set only by the exit seat's rule engine (TOOL-009). The gateway schema omits it.
     exit_reason: ExitRuleReason | None = None
+    # P1-4b: id of a stored signal JournalNote (engine/report.py); checked by the adapter.
+    signal_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{32}$")
 
     @model_validator(mode="after")
     def _size_matches_side(self) -> Self:

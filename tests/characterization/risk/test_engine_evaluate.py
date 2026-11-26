@@ -55,7 +55,7 @@ SELL_SEAT = "bot-06-exit"
 
 #: Recorded replay pins (tests/fixtures/replay/pins and CHANGELOG Phase 11 entries).
 SMOKE_10M_EVENTS_HASH = "b69c29593954129b52a8c9ab1cad390441b7b356dd482b8c7a4345bea55ad32d"
-TRADING_SMOKE_EVENTS_HASH = "5d55403d082a1341ddb664b5e1fb3df5cf52a29f3aeca39bef613efd47b6682d"
+TRADING_SMOKE_EVENTS_HASH = "b90a8027895b6394e59627ad6af7f9e08905e9d4943f63f5ead680e7eadb2f28"
 
 _HASH_LINE = re.compile(r"^events\.hash=([0-9a-f]{64})$", re.MULTILINE)
 _CHAIN_LINE = re.compile(r"^verify=CONSISTENT seq=(\d+) events=(\d+)$", re.MULTILINE)
@@ -767,4 +767,4 @@ def test_trading_smoke_replay_hash_and_chain_are_unchanged(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    assert _verify("smoke") == (TRADING_SMOKE_EVENTS_HASH, 11, 5)
+    assert _verify("smoke") == (TRADING_SMOKE_EVENTS_HASH, 13, 5)

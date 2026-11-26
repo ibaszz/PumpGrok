@@ -1,0 +1,42 @@
+change_id: p1-4b-signal-id
+proposed_by: bot-00-chief
+surface: contracts/events/fill_recorded.schema.json
+surfaces:
+- contracts/events/order_rejected.schema.json
+breaking: false
+version: "1.4.0"
+previous_version: "1.3.0"
+summary: >-
+  Additive optional field signal_id (string, default "") on FillRecorded and
+  OrderRejected: the idempotency key of the signal JournalNote (an AgentReport,
+  engine/report.py) the order cited; empty when none (ROADMAP P1-4b, P2-3).
+reversibility: two-way
+files:
+- src/pumpgrok/ledger/events.py
+- contracts/events/fill_recorded.schema.json
+- contracts/events/order_rejected.schema.json
+rationale: >-
+  Completes fill attribution: decision, cycle, model, dataset and now the signal
+  that prompted the order. The id resolves through LedgerStore.by_key; the paper
+  adapter refuses an order citing an id that is not a stored signal note. The
+  field has a default, so older rows validate and no reader changes. Signal notes
+  reuse the existing JournalNote type and the existing signal note kind, so no
+  other event schema changes. Schemas regenerated with
+  scripts/generate-event-schemas.py; pin drift is documented in CHANGELOG.
+pending_acks:
+- bot-00-chief
+- bot-01-scout
+- bot-02-risk
+- bot-03-whale
+- bot-04-sniper
+- bot-05-rug
+- bot-06-exit
+- bot-07-shill
+- bot-08-signal
+- bot-09-journal
+acknowledgements: []
+ack_note: >-
+  Non-breaking additive field; consumer acknowledgements are informational and
+  PENDING. No consumer rejection is outstanding.
+semantic_changes: []
+migration_note: ""

@@ -66,7 +66,11 @@ def _rows(path: Path, sql: str) -> list[tuple[object, ...]]:
 
 
 def _verdict(path: Path) -> dict[str, object]:
-    (row,) = _rows(path, "SELECT correlation_id, payload_json FROM events WHERE type='JournalNote'")
+    (row,) = _rows(
+        path,
+        "SELECT correlation_id, payload_json FROM events WHERE type='JournalNote'"
+        " AND json_extract(payload_json, '$.note_kind') = 'verdict'",
+    )
     return {"correlation_id": row[0], "payload": json.loads(str(row[1]))}
 
 
@@ -76,7 +80,9 @@ def _replay_ledger_contract(path: Path) -> None:
     assert [row[0] for row in rows] == [
         "JournalNote",
         "DailyRollover",
+        "JournalNote",  # P1-4b: engine BUY signal cited by the order
         "OrderRejected",
+        "JournalNote",
         "OrderPlaced",
         "FillRecorded",
         "PositionOpened",

@@ -47,6 +47,8 @@ class OrderRequest(BaseModel):
     approval_id: str = Field(pattern=r"^apr-[0-9A-HJKMNP-TV-Z]{26}$")
     quote_id: str | None = None
     exit_reason: ExitRuleReason | None = None
+    # P1-4b: id of a stored signal JournalNote (engine/report.py); checked by the adapter.
+    signal_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{32}$")
     correlation_id: str
 
     @model_validator(mode="after")

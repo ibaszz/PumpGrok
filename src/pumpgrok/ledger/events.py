@@ -127,6 +127,10 @@ class OrderRejected(_ClosedModel):
             " from; empty outside replay and on rows written before P1-4b"
         ),
     )
+    signal_id: str = Field(
+        default="",
+        description="engine/report.py signal note the order cited; empty when none",
+    )
 
 
 class FillRecorded(_ClosedModel):
@@ -162,6 +166,10 @@ class FillRecorded(_ClosedModel):
             "backtest/manifest.py dataset_digest of the replay dataset the row was simulated"
             " from; empty outside replay and on rows written before P1-4b"
         ),
+    )
+    signal_id: str = Field(
+        default="",
+        description="engine/report.py signal note the order cited; empty when none",
     )
 
 

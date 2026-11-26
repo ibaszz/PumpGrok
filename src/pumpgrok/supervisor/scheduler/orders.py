@@ -8,8 +8,10 @@ from typing import Any
 
 from pumpgrok.core.ids import CorrelationId, bind_correlation
 from pumpgrok.core.side_effect import SideEffect
-from pumpgrok.engine.pipeline import BUY
+from pumpgrok.engine.pipeline import BUY, CandidateVerdict
+from pumpgrok.engine.report import SIGNAL_SEAT, AgentReport, Finding, record_signal
 from pumpgrok.logging.json import bind_seat
+from pumpgrok.replay.clock import format_ts_utc
 from pumpgrok.supervisor.exit_rules import ExitRules, RuleSell
 from pumpgrok.supervisor.scheduler.replay_runtime import (
     EXIT_SEAT,
@@ -45,6 +47,7 @@ async def _place_candidates(trading: _ReplayTrading) -> dict[str, Any]:
             await trading.refresh_marks()
         mint = candidate.token.mint
         decision_id = trading.ids.ulid()
+        signal_id = _record_buy_signal(trading, candidate)
         payload = trading.place.spec.input_model.model_validate(
             {
                 "ticket_id": REPLAY_TICKET,
@@ -54,6 +57,7 @@ async def _place_candidates(trading: _ReplayTrading) -> dict[str, Any]:
                 "size_lamports": REPLAY_BUY_LAMPORTS,
                 "max_slippage_bps": REPLAY_SLIPPAGE_BPS,
                 "approval_id": f"apr-{trading.ids.ulid()}",
+                "signal_id": signal_id,
             }
         )
         with bind_seat("bot-04-sniper"), bind_correlation(CorrelationId.new(trading.ids)):
@@ -74,6 +78,42 @@ async def _place_candidates(trading: _ReplayTrading) -> dict[str, Any]:
     return {"orders": len(trading.attempts)}
 
 
+def _record_buy_signal(trading: _ReplayTrading, candidate: CandidateVerdict) -> str | None:
+    """Store the engine's BUY verdict as a signal note; return its id (P1-4b, P2-3)."""
+    if trading.store is None:
+        return None
+    tick = format_ts_utc(candidate.ts)
+    report = AgentReport(
+        agent="engine.pipeline",
+        agent_version=trading.engine_version or "unknown",
+        subject=candidate.token.mint,
+        ts_utc=tick,
+        findings=(
+            Finding(
+                claim=f"filter verdict {candidate.verdict.decision}: {candidate.verdict.reason}",
+                evidence_refs=(f"dataset:{trading.dataset_id or 'none'}", f"tick:{tick}"),
+            ),
+        ),
+        limitations=("deterministic filter only; no LLM agent ran on this candidate",),
+        recommendation="RESEARCH",
+    )
+    return record_signal(
+        trading.store,
+        report,
+        seat=SIGNAL_SEAT,
+        source="replay",
+        ts_utc=format_ts_utc(trading.clock.now()),
+        # A constant, not CorrelationId.new: drawing an id would shift every later ULID.
+        correlation_id="replay-signal",
+    )
+
+
+def _is_signal_note(row: Mapping[str, Any]) -> bool:
+    return (
+        row.get("type") == "JournalNote" and (row.get("payload") or {}).get("note_kind") == "signal"
+    )
+
+
 def _check_cycle_rows(rows: Sequence[Mapping[str, Any]]) -> None:
     """Only day-keyed ``DailyRollover`` rows and the sniper's order rows may be new."""
     for row in rows:
@@ -82,7 +122,7 @@ def _check_cycle_rows(rows: Sequence[Mapping[str, Any]]) -> None:
             day = str((row.get("payload") or {}).get("day_utc", ""))
             if not day or row.get("idempotency_key") != rollover_key(day):
                 raise RuntimeError("replay seat cycles wrote an unkeyed DailyRollover")
-        elif row_type in TRADE_ROW_TYPES or row_type in RISK_ROW_TYPES:
+        elif row_type in TRADE_ROW_TYPES or row_type in RISK_ROW_TYPES or _is_signal_note(row):
             continue
         elif row_type == "Escalation" and (row.get("payload") or {}).get("kind") == "graduated":
             continue  # the exit seat closed a graduated position (exit_rules._close_graduated)
@@ -170,6 +210,8 @@ def _replay_trading(runtime: ReplayRuntime) -> _ReplayTrading:
         exit_place=exit_place,
         refresh_marks=refresh_marks,
         store=runtime.store,
+        dataset_id=runtime.dataset_id,
+        engine_version=runtime.engine_version,
     )
 
     async def place_sell(mint: str, ticket: str, units: int, rule: str) -> dict[str, Any]:

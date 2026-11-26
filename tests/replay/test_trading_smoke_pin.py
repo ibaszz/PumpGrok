@@ -17,6 +17,8 @@ import pytest
 from pin_support import TRADING_SMOKE_FIXTURE, VerifyRun, ledger_rows, load_pin, verify_fixture
 
 from pumpgrok.backtest.manifest import dataset_digest
+from pumpgrok.engine.report import AgentReport, is_signal
+from pumpgrok.ledger.store import LedgerStore
 
 
 @pytest.fixture(scope="module")
@@ -93,3 +95,27 @@ def test_replay_fills_name_their_dataset(
         conn.close()
     assert payloads
     assert {p["dataset_id"] for p in payloads} == {expected}
+
+
+def test_replay_buys_cite_a_stored_engine_signal(
+    trading_run: tuple[VerifyRun, list[dict[str, Any]]],
+) -> None:
+    """P1-4b: each replay buy fill cites the signal note holding the engine's BUY verdict."""
+    run, _ = trading_run
+    store = LedgerStore(str(run.ledger))
+    try:
+        buys = [
+            e["payload"]
+            for e in store.read(limit=None)
+            if e["type"] == "FillRecorded" and e["payload"]["side"] == "buy"
+        ]
+        assert buys
+        for fill in buys:
+            assert is_signal(store, fill["signal_id"])
+            note = store.by_key(fill["signal_id"])
+            assert note is not None
+            report = AgentReport.model_validate_json(note["payload"]["text"])
+            assert (report.agent, report.subject) == ("engine.pipeline", fill["mint"])
+            assert report.recommendation == "RESEARCH"
+    finally:
+        store.close()

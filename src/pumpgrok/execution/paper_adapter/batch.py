@@ -124,6 +124,7 @@ class _BatchMixin(_BatchStagesMixin):
                     # Only CONFIRMING refusals depend on the execution model; earlier
                     # refusals keep their pre-P1-4 payload bytes.
                     **(self._attribution if stage == "CONFIRMING" else {}),
+                    "signal_id": request.signal_id or "",
                 },
             )
         except sqlite3.IntegrityError:

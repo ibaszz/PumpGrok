@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from pumpgrok.core.adapter import Fill, FillStatus, OrderRequest, Side
 from pumpgrok.core.errors import OrderRejectedError
 from pumpgrok.core.idempotency import exec_place_key
+from pumpgrok.engine.report import is_signal
 from pumpgrok.execution.curve_math import buy_out, impact_buy
 from pumpgrok.execution.paper_adapter.models import CurveSnapshot, _BuyConfirmed, _BuyQuote
 from pumpgrok.risk.engine import RiskDecision, order_hash_for
@@ -270,6 +271,22 @@ class _BuyMixin:
             )
         return curve0
 
+    async def _require_known_signal(
+        self, request: OrderRequest, ledger_source: str, correlation_id: str
+    ) -> None:
+        """Fail closed: an order may only cite a signal the ledger holds (P1-4b)."""
+        if request.signal_id is None or is_signal(self._store, request.signal_id):
+            return
+        raise await self._reject(
+            request,
+            request.decision_id,
+            "signal_unknown",
+            f"signal_id={request.signal_id}",
+            stage="ACCEPTED",
+            source=ledger_source,
+            correlation_id=correlation_id,
+        )
+
     async def _place_order(
         self,
         request: OrderRequest,
@@ -288,6 +305,7 @@ class _BuyMixin:
             if isinstance(repeated, Fill):
                 return repeated
             raise repeated
+        await self._require_known_signal(request, ledger_source, correlation_id)
         decision = await self._order_risk_decision(
             request,
             seat=seat,
@@ -591,6 +609,7 @@ class _BuyMixin:
                 "route": "curve",
                 "realised_slippage_bps": slipped,
                 **self._attribution,
+                "signal_id": request.signal_id or "",
             },
         }
 

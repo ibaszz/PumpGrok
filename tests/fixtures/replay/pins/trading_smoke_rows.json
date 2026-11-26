@@ -16,25 +16,41 @@
     "type": "DailyRollover"
   },
   {
-    "idempotency_key": "reject|SOL-20260101-001|buy|01KDVDNCE43AJG3A63YQTGAZZE|ACCEPTED|post_graduation_no_reserves",
-    "payload_sha256": "5b0ddf02c3429c15af79dd1060b80c1e8af5735ee3ad69f744587975120f5e8b",
+    "idempotency_key": "f9c4b5e07d7544b2bdaf43e192c8c9af",
+    "payload_sha256": "d14c8820490839b0b30f9fee85d277c3a246a75e0c2e73759882a10be7b68777",
     "seq": 3,
+    "source": "replay",
+    "ts": "2026-01-01T00:00:02.500000Z",
+    "type": "JournalNote"
+  },
+  {
+    "idempotency_key": "reject|SOL-20260101-001|buy|01KDVDNCE43AJG3A63YQTGAZZE|ACCEPTED|post_graduation_no_reserves",
+    "payload_sha256": "e2c8646a943c28f1850c970f5b610d521c68a8eb868b47cf2dd66ae4de1bd448",
+    "seq": 4,
     "source": "replay",
     "ts": "2026-01-01T00:00:02.750000Z",
     "type": "OrderRejected"
   },
   {
+    "idempotency_key": "b0e9b14b50da15c42410e5b994ab0934",
+    "payload_sha256": "1d3757edaa3a3dd277ef071b39f7a91fc36664c4bf4b1bd00eddef6f616c0ca1",
+    "seq": 5,
+    "source": "replay",
+    "ts": "2026-01-01T00:00:03.000000Z",
+    "type": "JournalNote"
+  },
+  {
     "idempotency_key": "6c0fdfec1710eb2320480c72c7df30bb",
     "payload_sha256": "1eb3b82b3c1e7d8ae509d935306f3c42c07aa2e3d300755c7c2485650ca34ad0",
-    "seq": 4,
+    "seq": 6,
     "source": "replay",
     "ts": "2026-01-01T00:00:03.250000Z",
     "type": "OrderPlaced"
   },
   {
     "idempotency_key": "fill|01KDVDND5JAPXD42TJSZCAN8FP",
-    "payload_sha256": "0f4dcbc8ef1116db69a42c437bcffbe15191016a7d7e237748fdfc4eb382680c",
-    "seq": 5,
+    "payload_sha256": "8f182d43702417ddad3bbf26a2fc452c62c94f952087042db2a0811818799f7e",
+    "seq": 7,
     "source": "replay",
     "ts": "2026-01-01T00:00:04.000000Z",
     "type": "FillRecorded"
@@ -42,7 +58,7 @@
   {
     "idempotency_key": "position|01KDVDND5JAPXD42TJSZCAN8FP",
     "payload_sha256": "7e7d2aa885fcaef2570e7cac9e6b89f4cded2d5efe238c2c19a21fd94b762880",
-    "seq": 6,
+    "seq": 8,
     "source": "replay",
     "ts": "2026-01-01T00:00:04.000000Z",
     "type": "PositionOpened"
@@ -50,7 +66,7 @@
   {
     "idempotency_key": "mtm|{\"at\":\"2026-01-01T00:00:30.000000Z\",\"basis\":{\"SmokeMintBBBB2222222222222222222222222222222\":10009000},\"prices\":{\"SmokeMintBBBB2222222222222222222222222222222\":{\"mtm_lamports\":24453593,\"source\":\"curve\",\"spot\":\"0.0002037037037037037037037037037\",\"ts_utc\":\"2026-01-01T00:00:30.000000Z\",\"venue_fee_lamports\":247005}}}",
     "payload_sha256": "62115015566110ed25f0fa465a591f971f997fb58712e38982c023f17d11edad",
-    "seq": 7,
+    "seq": 9,
     "source": "replay",
     "ts": "2026-01-01T00:00:30.000000Z",
     "type": "MarkToMarket"
@@ -58,7 +74,7 @@
   {
     "idempotency_key": "consume|apr-01KDVDP7HAQ09T9J82FMQPRWQS",
     "payload_sha256": "ae93cad283d89214841ed73a32375a18d763f521faae016159a7ce51bd18d41b",
-    "seq": 8,
+    "seq": 10,
     "source": "replay",
     "ts": "2026-01-01T00:00:30.250000Z",
     "type": "ApprovalRecorded"
@@ -66,15 +82,15 @@
   {
     "idempotency_key": "aea68c17eeaeb0972d242754d9ced5de",
     "payload_sha256": "a44ab44a4ea34fb58f0b52e48fc5200a521930f088ce413d0f1a5cd34958358e",
-    "seq": 9,
+    "seq": 11,
     "source": "replay",
     "ts": "2026-01-01T00:00:30.250000Z",
     "type": "OrderPlaced"
   },
   {
     "idempotency_key": "fill|01KDVDP7HAZ59CGEATNNFTR3DT",
-    "payload_sha256": "f950d7d2671f2a943614fcbf7c949f36739605ab9434514a392499c5e30476d4",
-    "seq": 10,
+    "payload_sha256": "8b7cdb1c68ef3b0fbc9e72c3bda6e121fcf5669be3e5f34a5702770b9a67cba5",
+    "seq": 12,
     "source": "replay",
     "ts": "2026-01-01T00:00:30.750000Z",
     "type": "FillRecorded"
@@ -82,7 +98,7 @@
   {
     "idempotency_key": "close|01KDVDP7HAZ59CGEATNNFTR3DT",
     "payload_sha256": "8f810005c6ff8665e0669ffa8bc3504d3ccdffe620ad1c9a5408baf21736d6d9",
-    "seq": 11,
+    "seq": 13,
     "source": "replay",
     "ts": "2026-01-01T00:00:30.750000Z",
     "type": "PositionClosed"

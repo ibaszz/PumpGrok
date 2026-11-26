@@ -126,3 +126,22 @@ would reference nothing. It needs a persisted signal first, either an `AgentRepo
 note (P2-3) or a signal row, and then an optional `signal_id` on `PlaceIn` / `OrderRequest`.
 Consequence: replay attribution is fill -> decision (`decision_id`) -> cycle
 (`correlation_id`) -> model (`assumptions_json`) -> data (`dataset_id`).
+
+## D-013 A signal is a stored AgentReport; orders cite it by its note key
+
+Context: D-012 deferred `signal_id` because nothing persisted a signal. Option 1 (user
+choice, 2026-11-26): build the P2-3 report envelope first, then cite it.
+Decision: `AgentReport` (`engine/report.py`) is stored by `record_signal` as a `JournalNote`
+with `note_kind = signal`; the note's content-derived idempotency key is the `signal_id`,
+so the same report always gets the same id and `LedgerStore.by_key` resolves it.
+`OrderRequest` and `exec.place` accept an optional `signal_id`; the paper adapter refuses an
+id that does not resolve to a signal note (`signal_unknown` at ACCEPTED, before risk) and
+stamps the id on the fill or rejection. The replay sniper writes the engine's BUY verdict
+as a signal (agent `engine.pipeline`, version = `filter_settings_hash`, evidence = dataset
+digest and tick time, recommendation `RESEARCH`) with a constant correlation id so the
+replay id stream is unchanged. `Finding.confidence` is optional and stays null unless
+measured. `order_hash_for` does not include `signal_id`: risk binds the order economics,
+not its rationale.
+Consequence: a replay fill traces to decision, cycle, model, data and the signal that
+prompted it. Seat-written signals (via `journal.append`) and feeding report
+recommendations into `risk/verdict.py` remain P2-3 follow-ups.

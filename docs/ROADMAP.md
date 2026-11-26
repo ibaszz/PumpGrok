@@ -24,7 +24,7 @@ yes before implementation.
 | P1-1 | Confirm the curve layout with `scripts/probe_curve_layout.py`; drop `[ASSUMED]` | `tools/onchain/curve_layout.py` | S (needs RPC access: approval for credentials if a paid RPC is used) | none |
 | P1-2 | **Done (tool meta), 2026-11-26.** `ToolMeta` carries `observed_at`, `subject`, `quality` next to `source` / `fetched_at` / `stale`; every production `ToolSpec` declares `quality` (test enforced) and the `tool()` wrapper stamps it. Availability is `stale` or a `DataStale` / `DataBlind` raise. Not done: `confidence` (belongs to P2-1 analysis outputs, D-011) and on-chain observed time on datafeed ticks (P1-2b: needs slot / blockTime from the feed; changes event-mode golden hashes) | `core/tool.py`, `tools/**` specs | M | none |
 | P1-3 | **Done (risk-only), 2026-11-26.** Deterministic research-verdict mapping (REJECT / WATCH / RESEARCH / APPROVED_FOR_PAPER_SIMULATION); agents can only lower it. `risk/verdict.py`; surfaced by `risk.check_limits`. Open: feeding agent recommendations needs P2-3 | `risk/verdict.py`, `tools/risk/check_limits.py` | M | P2-3 for agent input |
-| P1-4 | **Partly done, 2026-11-26.** `assumptions_json` (fee model and params, latency distribution, drop probability, partial-fill cap, price basis, curve-layout status) on every `FillRecorded` and CONFIRMING `OrderRejected` row. `dataset_id` (P1-4b, done 2026-11-26): `dataset_digest` of the replay dataset on the same rows. Open: `signal_id` (no signal record exists in the ledger to reference yet, see D-012; `decision_id` and `correlation_id` already link fill to decision and cycle) | `execution/assumptions.py`, `execution/paper_adapter/*.py`, `ledger/events.py`, `contracts/events/*.schema.json` | M | none |
+| P1-4 | **Done, 2026-11-26.** `assumptions_json` (fee model and params, latency distribution, drop probability, partial-fill cap, price basis, curve-layout status) on every `FillRecorded` and CONFIRMING `OrderRejected` row. `dataset_id` (P1-4b, done 2026-11-26): `dataset_digest` of the replay dataset on the same rows. `signal_id` (done 2026-11-26, D-013): the replay buy cites the stored engine signal; the adapter refuses an unknown id. `decision_id` and `correlation_id` link fill to decision and cycle | `execution/assumptions.py`, `execution/paper_adapter/*.py`, `ledger/events.py`, `contracts/events/*.schema.json` | M | none |
 | P1-5 | Wire `events/sources.py` (backoff, staleness, cursors) into the event-mode supervisor | `supervisor/event_desk.py` | M | none |
 | P1-6 | Calibrate REVIEW fee/latency constants against recorded live data; record the calibration dataset id | `execution/fees.py`, `execution/latency.py`, `scripts/measure_replay.py` | M | recorded data (in progress) |
 | P1-7 | Scheduled ledger backup (host cron or compose sidecar) | `docs/OPERATIONS.md`, compose | S | P0-2 |
@@ -35,7 +35,7 @@ yes before implementation.
 |----|------|-------|------|------------|
 | P2-1 | Wallet intelligence module: per-wallet history from RPC signatures, realized PnL where reconstructable, hold time, win rate, data completeness, quality score with confidence; explicit "insufficient history" state | new `src/pumpgrok/wallets/`, `tools/onchain/*` reuse, tests | L | P1-2 |
 | P2-2 | Untrusted-content hardening for engine prompts: system-prompt clause, length caps on token text | `engine/agents/*.py` | S | none (changes request hash: re-record smoke LLM fixtures) |
-| P2-3 | `AgentReport` envelope (see [AGENT_CATALOG.md](AGENT_CATALOG.md) section 4) emitted via `journal.append`; record agent disagreements as a journal note kind | `engine/models.py`, `tools/journal/append.py` | M | none |
+| P2-3 | **Partly done, 2026-11-26.** `AgentReport` envelope (`engine/report.py`, [AGENT_CATALOG.md](AGENT_CATALOG.md) section 4) stored as `signal` journal notes via `record_signal`; the replay sniper records the engine BUY verdict. Open: seat and engine-LLM agents emitting reports, feeding report recommendations into `risk/verdict.py`, and recording agent disagreements as a note kind | `engine/models.py`, `tools/journal/append.py` | M | none |
 | P2-4 | Strategy lab: bootstrap CIs, expectancy, Sortino, median return, avg win/loss; sensitivity report over the declared param space | `backtest/metrics_v2.py`, `backtest/report.py` | M | none |
 | P2-5 | LLM provider abstraction (Grok, Ollama, OpenAI-compatible, Anthropic) behind the existing budget/cache/fallback; per-agent model selection; token and latency tracking per call | `core/llm.py`, `engine/agents/base.py`, `config/sections/core.py` | M-L | none |
 | P2-6 | STRATEGY_RESEARCHER seat with read-only roster (backtest results, ledger reads) | `ownership.yaml`, `agents/`, `contracts/tool-rosters/` | M | P2-4 |
@@ -72,6 +72,12 @@ flowchart LR
 ```
 
 ## Implemented in this increment
+
+Increment 5 (branch `bot-00-chief/p2-3-signal-reports`):
+
+- P2-3 `AgentReport` and persisted signals; P1-4b `signal_id` on orders and fills. P1-4 is
+  complete. Trading-smoke gains two signal rows (seq 11 to 13); drift proven to be those
+  rows plus the new field only.
 
 Increment 4 (branch `bot-00-chief/p1-4b-signal-dataset`):
 
