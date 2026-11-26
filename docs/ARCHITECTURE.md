@@ -92,7 +92,9 @@ Notes on the diagram:
   paper desk (`supervisor/live_paper.py`) but currently places nothing (`_no_place`).
 - The live adapter exists but every path to it passes `LiveGate`, and `run --mode live`
   exits 3.
-- `events/sources.py` (backoff, staleness, cursors) is not wired into the supervisor.
+- `events/sources.py` (backoff, staleness, cursors) is wired into the event desk through
+  `events/feed_link.py` (P1-5): frames reach risk feed health and `run_feed` reconnects with
+  backoff and resync. Nothing starts the event desk or a socket yet (P0-2b).
 - `services/desk-gateway/src/desk_gateway/console.py` is not routed; there is no UI.
 
 ### Layer rules already enforced

@@ -1,7 +1,8 @@
 """Backoff, staleness, resync, and cursors for event sources.
 
 This module owns those four duties inside the events package. It does not
-open a socket, and it is not wired into the desk supervisor.
+open a socket. ``events/feed_link.py`` wires it to risk feed health and the
+reconnect loop; ``supervisor/event_desk.py`` builds that link (P1-5).
 """
 
 from __future__ import annotations

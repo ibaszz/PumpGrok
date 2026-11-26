@@ -22,6 +22,7 @@ from pumpgrok.core.adapter import ExecutionMode
 from pumpgrok.core.ids import IdFactory
 from pumpgrok.core.risk_budget import RiskBudget
 from pumpgrok.events.bus import EventBus
+from pumpgrok.events.feed_link import FeedLink
 from pumpgrok.events.models import Event
 from pumpgrok.events.sources import SourceSupervisor
 from pumpgrok.grok import GatewayLedger, GatewayRequest, GrokGateway
@@ -50,7 +51,10 @@ from pumpgrok.supervisor.recovery import recover
 if TYPE_CHECKING:
     from pumpgrok.ledger.store import LedgerStore
 
-__all__ = ["EventDesk", "EventDeskError", "build_event_desk"]
+__all__ = ["PUMPPORTAL_FEED", "EventDesk", "EventDeskError", "build_event_desk"]
+
+#: Feed name for the PumpPortal create/migration stream (``datafeed/portal.py``).
+PUMPPORTAL_FEED = "pumpportal"
 
 
 class EventDeskError(ValueError):
@@ -81,6 +85,13 @@ class EventDesk:
     entry_checks: EntryChecks | None = None
     budget: LayeredBudget | None = None
     restored: Any = None
+    feed: FeedLink | None = None
+
+    def source_states(self) -> dict[str, str]:
+        """Per-source status for ``doctor_source_lines`` (P1-5); read-only."""
+        if self.feed is None:
+            return {}
+        return {self.feed.name: str(self.feed.status())}
 
     def handle_evidence(self, evidence: EvidenceView) -> StageRow:
         """Event-triggered promotion evaluation (no timers, no polling)."""
@@ -184,6 +195,9 @@ def build_event_desk(
     sources = SourceSupervisor(
         clock, make_rng(7), path=sidecar_path or (Path("var") / "events-sidecar.sqlite")
     )
+    # P1-5: the PumpPortal stream reports frames to both the source supervisor and the
+    # risk engine's feed health; datafeed adapters take this link as their supervisor.
+    feed = FeedLink(PUMPPORTAL_FEED, sources, feed_health, clock)
     holder: dict[str, Any] = {}
 
     async def _handler(event: Event) -> None:
@@ -208,6 +222,7 @@ def build_event_desk(
         entry_checks=entry_checks,
         budget=real_budget,
         restored=restored,
+        feed=feed,
     )
     holder["desk"] = desk
     return desk

@@ -145,3 +145,18 @@ not its rationale.
 Consequence: a replay fill traces to decision, cycle, model, data and the signal that
 prompted it. Seat-written signals (via `journal.append`) and feeding report
 recommendations into `risk/verdict.py` remain P2-3 follow-ups.
+
+## D-014 One link object feeds both source health and risk feed health
+
+Context: P1-5. `SourceSupervisor` (backoff, staleness, cursor) and the risk engine's
+`FeedHealth` both tracked feed freshness but nothing connected them, and no loop used the
+backoff.
+Decision: `FeedLink` is the `supervisor` the existing datafeed adapters already accept, so
+`PortalFeed` and `LogsFeed` need no change; every good frame updates both objects with the
+same timestamp. `run_feed` owns reconnects: a clean stream end counts as a disconnect,
+transport errors (`OSError`, `TimeoutError`, `ConnectionError`) reconnect after the
+supervisor's backoff, anything else propagates rather than retrying forever. The loop takes
+`connect` from the caller and opens nothing itself. The paper-mode policy is unchanged: a
+stale required feed degrades, and only live mode fails closed (RSK-03).
+Consequence: once a process runs the event desk with a transport (P0-2b), feed silence
+reaches `RiskEngine.check` with no further wiring.

@@ -55,6 +55,14 @@ Today `place` is `_no_place` in `cli/verbs_state.py`: the desk is composed, then
 returns. A source with no transport yields stale, never invented, ticks
 (`datafeed/fallback.py`).
 
+Event-mode source wiring (P1-5, `events/feed_link.py`): a datafeed adapter reports to a
+`FeedLink`, which updates both the `SourceSupervisor` (backoff, staleness, held-mint
+cursor) and the risk engine's `FeedHealth`. `run_feed(link, connect, ...)` reads frames,
+records a gap on disconnect, resyncs held mints, waits the supervisor's backoff on the
+injected clock and reconnects; unknown errors propagate. `build_event_desk` builds the
+`pumpportal` link and `EventDesk.source_states()` returns the shape `doctor` prints. In paper
+mode a stale required feed degrades the verdict; only live mode blocks entries (RSK-03).
+
 ## 3. Operator reads (`pumpgrok tools <id>`)
 
 Each tool resolves through the registry (`tools/__init__.py`), validates input against its

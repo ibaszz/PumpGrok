@@ -31,10 +31,11 @@ Phase 15: trading-smoke events.hash after: bdcbe2d321eea3e4ff814e91434f5ffb8ab84
 All notable changes to PumpGrok are recorded here. The format follows Keep a Changelog.
 
 
-## [Unreleased] - Audit increment (P0 fixes, P1-2, P1-3, P1-4, P1-4b, P2-3 partial)
+## [Unreleased] - Audit increment (P0 fixes, P1-2, P1-3, P1-4, P1-4b, P1-5, P2-3 partial)
 
 ### Added
 
+- Event-source wiring (P1-5, `src/pumpgrok/events/feed_link.py`): `FeedLink` reports frames to both `SourceSupervisor` and risk `FeedHealth`; `run_feed` reconnects with backoff and held-mint resync; `build_event_desk` builds the `pumpportal` link and `EventDesk.source_states()` (DECISIONS D-014). No pin change.
 - `AgentReport` and persisted signals (`src/pumpgrok/engine/report.py`, P2-3 partial): a report stored as a `signal` JournalNote; its idempotency key is the `signal_id`. `OrderRequest` and `exec.place` accept an optional `signal_id`; the paper adapter refuses an id that is not a stored signal (`signal_unknown`, ACCEPTED) and stamps it on `FillRecorded` / `OrderRejected`. The replay sniper records the engine's BUY verdict as a signal and cites it. Trading-smoke gains two signal rows (seq 11 to 13): with those rows removed and `signal_id` stripped, all 11 earlier rows match their pinned digests; the 26 characterization digests match their old values with `signal_id` stripped (DECISIONS D-013).
 - `FillRecorded` and `OrderRejected` rows carry `dataset_id` (P1-4b): the `backtest/manifest.py` `dataset_digest` of the replay dataset, the same digest backtest run ids pin; empty outside replay. The trading-smoke pin, its three fill/reject row digests, the 26 paper-adapter characterization digests and `TRADING_SMOKE_EVENTS_HASH` were re-pinned; all pass against their previous values with `dataset_id` stripped.
 - Tool provenance envelope (P1-2): `ToolMeta` gains `observed_at`, `subject` and `quality`; every production `ToolSpec` declares `quality` and the `tool()` wrapper stamps it with the call's subject (`src/pumpgrok/core/tool.py`, DECISIONS D-011).
