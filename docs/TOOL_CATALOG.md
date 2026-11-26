@@ -20,7 +20,11 @@ Design document only. Companion to `docs/ROSTER.md` (who may call what) and
 | source | the existing function to port, or `new` |
 
 Common envelope. Every output includes `meta: {source: str, fetched_at: datetime(UTC),
-freshness_s: float, correlation_id: str, stale: bool}`; every input accepts an optional
+freshness_s: float, correlation_id: str, stale: bool, observed_at: datetime | null,
+subject: str | null, quality: ledger | onchain | onchain_assumed | simulated | derived |
+local}`. `quality` is declared on each tool's `ToolSpec` and stamped by the `tool()` wrapper
+together with `subject` (first of the input `mint`, `creator`, `ticket_id`); ledger reads set
+`observed_at` to `fetched_at` (ROADMAP P1-2, DECISIONS D-011); every input accepts an optional
 `correlation_id` (propagated by the registry if omitted; section 10 of interfaces.md). The
 schemas below list only tool-specific fields. `required` marks required inputs.
 

@@ -52,6 +52,7 @@ POSITIONS_SPEC = ToolSpec(
     timeout_s=10.0,
     rate_limit_key="ledger",
     backend="pumpgrok.execution.paper_adapter.PaperAdapter.positions",
+    quality="ledger",
 )
 
 

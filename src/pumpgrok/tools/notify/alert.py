@@ -71,6 +71,7 @@ ALERT_SPEC = ToolSpec(
     rate_limit_key="notify",
     idempotent=True,
     backend="pumpgrok.tools.notify.notifier.Notifier.send",
+    quality="local",
 )
 
 

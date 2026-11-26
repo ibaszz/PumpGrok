@@ -66,6 +66,7 @@ TOP_HOLDERS_SPEC = ToolSpec(
     retry=J5,
     rate_limit_key=SOLANA_RPC_SOURCE,
     backend="src/pumpgrok/tools/onchain/holders.py holder_snapshot + getTokenSupply",
+    quality="onchain",
 )
 
 

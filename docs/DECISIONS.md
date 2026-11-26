@@ -95,3 +95,20 @@ defaults, so every new `FillRecorded`/`OrderRejected` payload gains the key; the
 trading-smoke pin was re-pinned after proving the payloads differ by that key only.
 Consequence: a row is self-describing even if config history is lost; ledger growth is
 small at paper volumes.
+
+## D-011 Provenance is declared per tool and stamped centrally
+
+Context: P1-2 asked for source, observed and retrieved time, subject, quality, confidence
+and availability on tool meta and datafeed ticks.
+Decision: `quality` is a closed set declared on each `ToolSpec`, so a tool's data class sits
+next to its backend and a coverage test fails on an unclassified tool. The `tool()` wrapper
+stamps `quality`, `subject` (input `mint`, `creator`, `ticket_id`) and, for ledger reads,
+`observed_at`; a tool can still set any of them itself. `observed_at` stays `None` when the
+source does not report it rather than copying the fetch time. No `confidence` field on raw
+data: nothing measures it, and a constant would be invented precision; it belongs to
+analysis outputs (P2-1). No separate `availability` field: `stale` plus the
+`DataStale` / `DataBlind` raise already express it. Datafeed ticks are unchanged (they carry
+source, subject and receive time; adding fields moves event-mode golden hashes): P1-2b.
+Consequence: every tool output now says what kind of data it is; `market.price`,
+`market.liquidity` and `onchain.lp_status` are visibly `onchain_assumed` until the curve
+layout probe (P1-1) confirms the layout.

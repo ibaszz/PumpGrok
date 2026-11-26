@@ -65,6 +65,7 @@ CANCEL_SPEC = ToolSpec(
     requires_approval=False,
     idempotent=True,
     backend="pumpgrok.execution.paper_adapter.PaperAdapter.cancel",
+    quality="simulated",
 )
 
 

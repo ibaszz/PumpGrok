@@ -67,6 +67,7 @@ EVENT_EMIT_SPEC = ToolSpec(
     rate_limit_key="desk",
     idempotent=True,
     backend="pumpgrok.tools.journal.append",
+    quality="ledger",
 )
 
 

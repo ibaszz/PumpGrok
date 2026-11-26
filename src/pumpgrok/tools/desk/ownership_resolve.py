@@ -53,6 +53,7 @@ OWNERSHIP_RESOLVE_SPEC = ToolSpec(
     timeout_s=5.0,
     rate_limit_key="desk",
     backend="pumpgrok.tools.desk.ownership_resolve",
+    quality="local",
 )
 
 

@@ -58,6 +58,7 @@ PRICE_SPEC = ToolSpec(
     retry=J4,
     rate_limit_key=SOLANA_RPC_SOURCE,
     backend="src/pumpgrok/tools/onchain/curve_layout.py via solana_rpc getAccountInfo",
+    quality="onchain_assumed",
 )
 
 

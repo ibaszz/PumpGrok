@@ -67,6 +67,7 @@ DOCTOR_SPEC = ToolSpec(
     rate_limit_key="desk",
     idempotent=True,
     backend="pumpgrok.doctor.doctor_report",
+    quality="local",
 )
 
 

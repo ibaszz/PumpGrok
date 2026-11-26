@@ -91,6 +91,7 @@ PLACE_SPEC = ToolSpec(
     requires_approval=True,
     idempotent=True,
     backend="pumpgrok.execution.paper_adapter.PaperAdapter.place",
+    quality="simulated",
 )
 
 

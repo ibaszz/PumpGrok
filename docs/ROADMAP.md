@@ -22,7 +22,7 @@ yes before implementation.
 | ID | Item | Files | Size | Depends on |
 |----|------|-------|------|------------|
 | P1-1 | Confirm the curve layout with `scripts/probe_curve_layout.py`; drop `[ASSUMED]` | `tools/onchain/curve_layout.py` | S (needs RPC access: approval for credentials if a paid RPC is used) | none |
-| P1-2 | Provenance envelope: `source`, `observed_ts`, `retrieved_ts`, `subject`, `quality`, `confidence`, `availability` on tool `meta` and datafeed ticks | `core/datasource.py`, `tools/_common.py`, `datafeed/*.py` | M | none |
+| P1-2 | **Done (tool meta), 2026-11-26.** `ToolMeta` carries `observed_at`, `subject`, `quality` next to `source` / `fetched_at` / `stale`; every production `ToolSpec` declares `quality` (test enforced) and the `tool()` wrapper stamps it. Availability is `stale` or a `DataStale` / `DataBlind` raise. Not done: `confidence` (belongs to P2-1 analysis outputs, D-011) and on-chain observed time on datafeed ticks (P1-2b: needs slot / blockTime from the feed; changes event-mode golden hashes) | `core/tool.py`, `tools/**` specs | M | none |
 | P1-3 | **Done (risk-only), 2026-11-26.** Deterministic research-verdict mapping (REJECT / WATCH / RESEARCH / APPROVED_FOR_PAPER_SIMULATION); agents can only lower it. `risk/verdict.py`; surfaced by `risk.check_limits`. Open: feeding agent recommendations needs P2-3 | `risk/verdict.py`, `tools/risk/check_limits.py` | M | P2-3 for agent input |
 | P1-4 | **Partly done, 2026-11-26.** `assumptions_json` (fee model and params, latency distribution, drop probability, partial-fill cap, price basis, curve-layout status) on every `FillRecorded` and CONFIRMING `OrderRejected` row. Open: `signal_id` and `dataset_id` (P1-4b; `OrderRequest` is `extra="forbid"` with many callers, so it needs its own change; `decision_id` and `correlation_id` already link fill to decision and cycle) | `execution/assumptions.py`, `execution/paper_adapter/*.py`, `ledger/events.py`, `contracts/events/*.schema.json` | M | none |
 | P1-5 | Wire `events/sources.py` (backoff, staleness, cursors) into the event-mode supervisor | `supervisor/event_desk.py` | M | none |
@@ -72,6 +72,11 @@ flowchart LR
 ```
 
 ## Implemented in this increment
+
+Increment 3 (branch `bot-00-chief/p1-2-provenance`):
+
+- P1-2 done for tool meta: provenance fields on `ToolMeta`, `quality` on all 37 production
+  tool specs, stamping in `core/tool.py`; datafeed observed time deferred as P1-2b.
 
 Increment 2 (branch `bot-00-chief/p1-attribution-verdicts`):
 

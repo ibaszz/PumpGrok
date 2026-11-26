@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from datetime import datetime
-from typing import Any, Protocol, Self, runtime_checkable
+from typing import Any, Literal, Protocol, Self, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
@@ -35,8 +35,30 @@ class RetryPolicy(BaseModel):
         return cls(attempts=1)
 
 
+#: Where a tool's data comes from (ROADMAP P1-2, DECISIONS D-011). Declared per tool on
+#: ``ToolSpec.quality`` and stamped onto ``ToolMeta`` by :func:`tool`.
+#:
+#: - ``ledger``: the local paper ledger; observed when fetched.
+#: - ``onchain``: decoded Solana RPC data.
+#: - ``onchain_assumed``: decoded with the ``[ASSUMED]`` curve layout (``curve_layout.py``).
+#: - ``simulated``: paper execution model output, never a real fill or quote.
+#: - ``derived``: deterministic composite of other reads (scores, aggregates, limits).
+#: - ``local``: desk-local state and files (docs, memory, notifier, receipts).
+DataQuality = Literal["ledger", "onchain", "onchain_assumed", "simulated", "derived", "local"]
+
+#: Input fields that name what a tool call is about, in precedence order.
+SUBJECT_FIELDS = ("mint", "creator", "ticket_id")
+
+
 class ToolMeta(BaseModel):
-    """Envelope every tool output carries."""
+    """Envelope every tool output carries.
+
+    Provenance (P1-2): ``source`` is the upstream, ``fetched_at`` the retrieval time,
+    ``observed_at`` when the source state was observed (``None``: not reported by the
+    source; ``fetched_at`` is then the upper bound), ``subject`` what the call is about,
+    ``quality`` the data class. Availability is ``stale`` on a returned output; an
+    unavailable source raises ``DataStale`` / ``DataBlind`` instead of returning.
+    """
 
     source: str
     fetched_at: datetime
@@ -44,6 +66,9 @@ class ToolMeta(BaseModel):
     correlation_id: str
     stale: bool = False
     reason: str | None = None
+    observed_at: datetime | None = None
+    subject: str | None = None
+    quality: DataQuality | None = None
 
 
 class ToolInput(BaseModel):
@@ -102,6 +127,7 @@ class ToolSpec(BaseModel):
     requires_approval: bool = False  # roster gate g6: approval_id required in input
     idempotent: bool = False  # True for every write; input carries or derives a key
     backend: str = Field(min_length=1)  # endpoint or module path, for the audit log
+    quality: DataQuality | None = None  # P1-2; every production tool sets it (test enforced)
 
     @property
     def capability(self) -> str:
@@ -137,6 +163,26 @@ class Tool(Protocol):
     async def __call__(self, payload: ToolInput, /) -> ToolOutput: ...
 
 
+def _stamp_provenance(spec: ToolSpec, payload: ToolInput, out: ToolOutput) -> ToolOutput:
+    """Fill ``quality``, ``subject`` and (ledger) ``observed_at`` unless the tool set them."""
+    meta = out.meta
+    update: dict[str, Any] = {}
+    if meta.quality is None and spec.quality is not None:
+        update["quality"] = spec.quality
+    if meta.subject is None:
+        subject = next(
+            (v for f in SUBJECT_FIELDS if isinstance(v := getattr(payload, f, None), str) and v),
+            None,
+        )
+        if subject is not None:
+            update["subject"] = subject
+    if meta.observed_at is None and update.get("quality", meta.quality) == "ledger":
+        update["observed_at"] = meta.fetched_at
+    if update:
+        out.meta = meta.model_copy(update=update)
+    return out
+
+
 def tool(spec: ToolSpec) -> Callable[[Callable[[Any], Awaitable[Any]]], Tool]:
     """Attach a ToolSpec to an async function and validate I/O.
 
@@ -154,7 +200,7 @@ def tool(spec: ToolSpec) -> Callable[[Callable[[Any], Awaitable[Any]]], Tool]:
                 if not isinstance(payload, spec.input_model):
                     raise TypeError(f"{spec.name}: expected {spec.input_model.__name__}")
                 result = await fn(payload)
-                return spec.output_model.model_validate(result)
+                return _stamp_provenance(spec, payload, spec.output_model.model_validate(result))
 
         return _BoundTool()
 

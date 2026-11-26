@@ -56,6 +56,7 @@ DEPLOYER_HISTORY_SPEC = ToolSpec(
     retry=J5,
     rate_limit_key=SOLANA_RPC_SOURCE,
     backend="src/pumpgrok/tools/onchain/deployer_history.py via getSignaturesForAddress",
+    quality="onchain",
 )
 
 

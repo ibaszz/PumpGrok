@@ -137,6 +137,7 @@ KILL_SWITCH_SPEC = ToolSpec(
     rate_limit_key="killswitch",
     idempotent=True,
     backend="pumpgrok.ledger.store.LedgerStore",
+    quality="ledger",
 )
 
 

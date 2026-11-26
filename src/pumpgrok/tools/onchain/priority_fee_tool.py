@@ -56,6 +56,7 @@ PRIORITY_FEE_SPEC = ToolSpec(
     retry=J5,
     rate_limit_key=SOLANA_RPC_SOURCE,
     backend="src/pumpgrok/tools/onchain/priority_fee.py estimate_priority_fee",
+    quality="onchain",
 )
 
 

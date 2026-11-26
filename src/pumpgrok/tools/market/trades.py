@@ -74,6 +74,7 @@ TRADES_SPEC = ToolSpec(
     retry=J4,
     rate_limit_key=SOLANA_RPC_SOURCE,
     backend="src/pumpgrok/tools/market/trades.py via solana_rpc signatures",
+    quality="onchain",
 )
 
 

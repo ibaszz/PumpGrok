@@ -70,7 +70,9 @@ never include endpoint URLs or header values (`tools/onchain/rpc.py`).
 | Freshness | `core/datasource.py` `Freshness`; `risk/feed_health.py`; `DataStaleBreaker` |
 | Correlation | `events.correlation_id`; `core/correlation.py` |
 | Dataset identity | sealed manifest hash (`backtest/manifest.py`, `replay/fixtures.py`) |
-| Retrieval time, quality, confidence per datum | Not uniform. Planned as the provider envelope (ROADMAP P1-2) |
+| Retrieval time, observed time, subject, quality | Tool `meta` (`core/tool.py` `ToolMeta`): `fetched_at`, `observed_at` (ledger reads only; `None` when the source does not report it), `subject` (from the input `mint` / `creator` / `ticket_id`), `quality` (`ledger`, `onchain`, `onchain_assumed`, `simulated`, `derived`, `local`; declared on each `ToolSpec`). Availability: `meta.stale` on an output, `DataStale` / `DataBlind` when unavailable (ROADMAP P1-2) |
+| Confidence per datum | Not on raw data. Belongs to analysis outputs (wallet scores, P2-1) |
+| Datafeed ticks | `curve_source`, `mint`, `ts_utc` (receive time) already present; on-chain observed time (slot / blockTime) not yet carried (P1-2b) |
 
 ## 5. Trust boundaries
 

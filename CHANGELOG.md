@@ -23,10 +23,11 @@ Phase 15: trading-smoke events.hash after: bdcbe2d321eea3e4ff814e91434f5ffb8ab84
 All notable changes to PumpGrok are recorded here. The format follows Keep a Changelog.
 
 
-## [Unreleased] - Audit increment (P0 fixes, P1-3, P1-4)
+## [Unreleased] - Audit increment (P0 fixes, P1-2, P1-3, P1-4)
 
 ### Added
 
+- Tool provenance envelope (P1-2): `ToolMeta` gains `observed_at`, `subject` and `quality`; every production `ToolSpec` declares `quality` and the `tool()` wrapper stamps it with the call's subject (`src/pumpgrok/core/tool.py`, DECISIONS D-011).
 - `FillRecorded` and CONFIRMING-stage `OrderRejected` rows carry `assumptions_json`: the fee model, latency distribution, drop probability, partial-fill cap, price basis and curve-layout status the paper adapter simulated under (`src/pumpgrok/execution/assumptions.py`). Rows written earlier validate with an empty value. The trading-smoke pin moves because of this field only: stripping `assumptions_json` from the new payloads reproduces every previously pinned row digest. The 26 paper-adapter characterization digests (`tests/characterization/execution/test_paper_adapter_{batch,confirm,sell}.py`) and `TRADING_SMOKE_EVENTS_HASH` in `tests/characterization/risk/test_engine_evaluate.py` were re-pinned for the same reason; all 27 pass against their old values when the field is stripped.
 - Deterministic research verdicts (`src/pumpgrok/risk/verdict.py`): REJECT, WATCH, RESEARCH, APPROVED_FOR_PAPER_SIMULATION from a risk outcome; agent recommendations can only lower it. `risk.check_limits` reports `research_verdict` and `verdict_category`; because its engine rules skip, a pass there caps at RESEARCH.
 - Docker secret loader (`src/pumpgrok/config/docker_secret.py`) and the `pumpgrok doctor` secret-file permission warning.

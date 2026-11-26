@@ -85,6 +85,7 @@ APPEND_SPEC = ToolSpec(
     rate_limit_key="ledger",
     idempotent=True,
     backend="pumpgrok.ledger.store.LedgerStore",
+    quality="ledger",
 )
 
 

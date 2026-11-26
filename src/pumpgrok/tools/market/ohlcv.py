@@ -65,6 +65,7 @@ OHLCV_SPEC = ToolSpec(
     retry=J4,
     rate_limit_key=SOLANA_RPC_SOURCE,
     backend="src/pumpgrok/tools/market/ohlcv.py via market.trades fetch",
+    quality="derived",
 )
 
 

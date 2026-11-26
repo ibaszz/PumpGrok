@@ -71,6 +71,7 @@ LARGE_TRANSFERS_SPEC = ToolSpec(
     retry=J5,
     rate_limit_key=SOLANA_RPC_SOURCE,
     backend="src/pumpgrok/tools/onchain/large_transfers.py via signatures+transactions",
+    quality="onchain",
 )
 
 

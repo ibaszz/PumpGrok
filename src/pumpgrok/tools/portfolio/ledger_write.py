@@ -62,6 +62,7 @@ LEDGER_WRITE_SPEC = ToolSpec(
     rate_limit_key="ledger",
     idempotent=True,
     backend="pumpgrok.ledger.store.LedgerStore.append",
+    quality="ledger",
 )
 
 

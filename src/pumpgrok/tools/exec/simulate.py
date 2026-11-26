@@ -84,6 +84,7 @@ SIMULATE_SPEC = ToolSpec(
     timeout_s=10.0,
     rate_limit_key="solana_rpc",
     backend="pumpgrok.execution.paper_adapter.PaperAdapter.simulate",
+    quality="simulated",
 )
 
 

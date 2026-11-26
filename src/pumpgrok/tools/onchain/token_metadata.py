@@ -56,6 +56,7 @@ TOKEN_METADATA_SPEC = ToolSpec(
     retry=J5,
     rate_limit_key=SOLANA_RPC_SOURCE,
     backend="src/pumpgrok/tools/onchain/authorities.py check_mint",
+    quality="onchain",
 )
 
 

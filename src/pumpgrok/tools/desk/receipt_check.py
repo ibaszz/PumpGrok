@@ -73,6 +73,7 @@ RECEIPT_CHECK_SPEC = ToolSpec(
     timeout_s=60.0,
     rate_limit_key="desk",
     backend="ci.gates",
+    quality="local",
 )
 
 

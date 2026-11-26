@@ -61,6 +61,7 @@ EXPOSURE_SPEC = ToolSpec(
     timeout_s=5.0,
     rate_limit_key="ledger",
     backend="pumpgrok.ledger.store.LedgerStore",
+    quality="ledger",
 )
 
 

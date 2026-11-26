@@ -63,6 +63,7 @@ MEMORY_RETAIN_SPEC = ToolSpec(
     rate_limit_key="desk",
     idempotent=True,
     backend="pumpgrok.tools.desk._memory.MemoryBank",
+    quality="local",
 )
 
 

@@ -53,6 +53,7 @@ DOCS_SEARCH_SPEC = ToolSpec(
     timeout_s=10.0,
     rate_limit_key="desk",
     backend="pumpgrok.tools.desk.docs_search",
+    quality="local",
 )
 
 

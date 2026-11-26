@@ -115,6 +115,7 @@ SCORE_SPEC = ToolSpec(
     retry=RetryPolicy.none(),
     rate_limit_key=SOLANA_RPC_SOURCE,
     backend="src/pumpgrok/tools/safety/score_report.py composing onchain/market readers",
+    quality="derived",
 )
 
 
