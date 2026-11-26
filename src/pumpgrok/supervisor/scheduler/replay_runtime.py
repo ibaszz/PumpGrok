@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from pumpgrok.backtest.manifest import dataset_digest
 from pumpgrok.backtest.results import FillDetail
 from pumpgrok.config.settings import ExitsSettings
 from pumpgrok.core.bot import BotManifest
@@ -242,6 +243,7 @@ def open_replay_runtime(
             # The fixture is the venue: no random tx drop, so a recorded buy fills.
             p_drop=0.0,
             source="replay",
+            dataset_id=dataset_digest(dataset_dir),
         )
         registry, _audits = build_registry(clock=clock, rng=make_rng(seed))
         registry.register(build_place_tool(adapter, lambda: budget, clock))

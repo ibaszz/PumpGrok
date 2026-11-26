@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 class _BuyMixin:
     if TYPE_CHECKING:
-        _assumptions_json: str
+        _attribution: dict[str, str]
         _active_places: set[str]
         _clock: Clock
         _fees: FeeModel
@@ -590,7 +590,7 @@ class _BuyMixin:
                 "curve_after_t": curve1.t_units,
                 "route": "curve",
                 "realised_slippage_bps": slipped,
-                "assumptions_json": self._assumptions_json,
+                **self._attribution,
             },
         }
 

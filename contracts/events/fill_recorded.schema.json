@@ -132,6 +132,12 @@
       "description": "execution/assumptions.py canonical JSON; empty on rows written before P1-4",
       "title": "Assumptions Json",
       "type": "string"
+    },
+    "dataset_id": {
+      "default": "",
+      "description": "backtest/manifest.py dataset_digest of the replay dataset the row was simulated from; empty outside replay and on rows written before P1-4b",
+      "title": "Dataset Id",
+      "type": "string"
     }
   },
   "required": [

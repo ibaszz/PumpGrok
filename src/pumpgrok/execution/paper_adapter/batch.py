@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 class _BatchMixin(_BatchStagesMixin):
     if TYPE_CHECKING:
-        _assumptions_json: str
+        _attribution: dict[str, str]
         _risk: RiskEngine
         _store: LedgerStore
 
@@ -123,11 +123,7 @@ class _BatchMixin(_BatchStagesMixin):
                     "confirm_out": confirm_out,
                     # Only CONFIRMING refusals depend on the execution model; earlier
                     # refusals keep their pre-P1-4 payload bytes.
-                    **(
-                        {"assumptions_json": self._assumptions_json}
-                        if stage == "CONFIRMING"
-                        else {}
-                    ),
+                    **(self._attribution if stage == "CONFIRMING" else {}),
                 },
             )
         except sqlite3.IntegrityError:

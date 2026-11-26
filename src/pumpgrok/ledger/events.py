@@ -120,6 +120,13 @@ class OrderRejected(_ClosedModel):
         default="",
         description="execution/assumptions.py canonical JSON; empty on rows written before P1-4",
     )
+    dataset_id: str = Field(
+        default="",
+        description=(
+            "backtest/manifest.py dataset_digest of the replay dataset the row was simulated"
+            " from; empty outside replay and on rows written before P1-4b"
+        ),
+    )
 
 
 class FillRecorded(_ClosedModel):
@@ -148,6 +155,13 @@ class FillRecorded(_ClosedModel):
     assumptions_json: str = Field(
         default="",
         description="execution/assumptions.py canonical JSON; empty on rows written before P1-4",
+    )
+    dataset_id: str = Field(
+        default="",
+        description=(
+            "backtest/manifest.py dataset_digest of the replay dataset the row was simulated"
+            " from; empty outside replay and on rows written before P1-4b"
+        ),
     )
 
 

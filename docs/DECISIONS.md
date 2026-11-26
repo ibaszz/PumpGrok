@@ -112,3 +112,17 @@ source, subject and receive time; adding fields moves event-mode golden hashes):
 Consequence: every tool output now says what kind of data it is; `market.price`,
 `market.liquidity` and `onchain.lp_status` are visibly `onchain_assumed` until the curve
 layout probe (P1-1) confirms the layout.
+
+## D-012 Dataset identity is the backtest dataset digest; signal identity waits for a signal record
+
+Context: P1-4b asked for `dataset_id` and `signal_id` on each simulated fill.
+Decision: `dataset_id` is `backtest/manifest.py` `dataset_digest(dataset_dir)`, passed to the
+`PaperAdapter` by the replay runtime and stamped beside `assumptions_json`. It is the digest
+backtest run ids already pin, so a replay fill joins to every backtest run over the same
+bytes. Live-data paper has no sealed dataset and records an empty value; the row `source`
+column already separates replay from paper. `signal_id` is not added yet: the ledger holds
+no signal record (the engine's BUY verdict is an in-memory `CandidateVerdict`), so an id
+would reference nothing. It needs a persisted signal first, either an `AgentReport` journal
+note (P2-3) or a signal row, and then an optional `signal_id` on `PlaceIn` / `OrderRequest`.
+Consequence: replay attribution is fill -> decision (`decision_id`) -> cycle
+(`correlation_id`) -> model (`assumptions_json`) -> data (`dataset_id`).

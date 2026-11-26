@@ -57,6 +57,7 @@ class PaperAdapter(
         price_source: PriceSource | None = None,
         source: Literal["paper", "replay", "manual"] = "paper",
         p_drop: float = P_DROP,
+        dataset_id: str = "",
     ) -> None:
         self._store = store
         self._risk = risk
@@ -72,6 +73,8 @@ class PaperAdapter(
         self._assumptions_json = execution_assumptions_json(
             fees=self._fees, p_drop=p_drop, partial_fill_fraction=self._budget.partial_fill_fraction
         )
+        # P1-4/P1-4b attribution stamped on every fill and CONFIRMING rejection.
+        self._attribution = {"assumptions_json": self._assumptions_json, "dataset_id": dataset_id}
         self._inflight = _InflightOrders()
         self._cancelled: set[str] = set()
         self._last_price_ts: dict[str, float] = {}

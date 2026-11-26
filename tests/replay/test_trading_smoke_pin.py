@@ -7,12 +7,16 @@ events.hash, chain length and full row dump with the recorded pins. A move is a 
 
 from __future__ import annotations
 
+import json
 import logging
+import sqlite3
 from pathlib import Path
 from typing import Any
 
 import pytest
 from pin_support import TRADING_SMOKE_FIXTURE, VerifyRun, ledger_rows, load_pin, verify_fixture
+
+from pumpgrok.backtest.manifest import dataset_digest
 
 
 @pytest.fixture(scope="module")
@@ -71,3 +75,21 @@ def test_exported_replay_seed_does_not_move_the_trading_smoke_pin(
     assert run.events_hash == load_pin("trading_smoke")["events_hash"]
     assert root.handlers == handlers_before
     assert root.level == level_before
+
+
+def test_replay_fills_name_their_dataset(
+    trading_run: tuple[VerifyRun, list[dict[str, Any]]],
+) -> None:
+    """P1-4b: every fill carries the backtest dataset digest of the fixture it replayed."""
+    run, _ = trading_run
+    expected = dataset_digest(Path(__file__).resolve().parents[1] / "fixtures/replay/smoke")
+    conn = sqlite3.connect(str(run.ledger))
+    try:
+        payloads = [
+            json.loads(p)
+            for (p,) in conn.execute("SELECT payload_json FROM events WHERE type = 'FillRecorded'")
+        ]
+    finally:
+        conn.close()
+    assert payloads
+    assert {p["dataset_id"] for p in payloads} == {expected}

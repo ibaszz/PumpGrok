@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 class _MarksMixin:
     if TYPE_CHECKING:
-        _assumptions_json: str
+        _attribution: dict[str, str]
         _clock: Clock
         _fees: FeeModel
         _frozen_marks: dict[str, int]
@@ -453,7 +453,7 @@ class _MarksMixin:
                 "cash_delta_lamports": proceeds,
                 "venue_tx_ref": venue_tx_ref,
                 "route": "curve",
-                "assumptions_json": self._assumptions_json,
+                **self._attribution,
             },
         }
 

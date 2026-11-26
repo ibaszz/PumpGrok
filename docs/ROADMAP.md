@@ -24,7 +24,7 @@ yes before implementation.
 | P1-1 | Confirm the curve layout with `scripts/probe_curve_layout.py`; drop `[ASSUMED]` | `tools/onchain/curve_layout.py` | S (needs RPC access: approval for credentials if a paid RPC is used) | none |
 | P1-2 | **Done (tool meta), 2026-11-26.** `ToolMeta` carries `observed_at`, `subject`, `quality` next to `source` / `fetched_at` / `stale`; every production `ToolSpec` declares `quality` (test enforced) and the `tool()` wrapper stamps it. Availability is `stale` or a `DataStale` / `DataBlind` raise. Not done: `confidence` (belongs to P2-1 analysis outputs, D-011) and on-chain observed time on datafeed ticks (P1-2b: needs slot / blockTime from the feed; changes event-mode golden hashes) | `core/tool.py`, `tools/**` specs | M | none |
 | P1-3 | **Done (risk-only), 2026-11-26.** Deterministic research-verdict mapping (REJECT / WATCH / RESEARCH / APPROVED_FOR_PAPER_SIMULATION); agents can only lower it. `risk/verdict.py`; surfaced by `risk.check_limits`. Open: feeding agent recommendations needs P2-3 | `risk/verdict.py`, `tools/risk/check_limits.py` | M | P2-3 for agent input |
-| P1-4 | **Partly done, 2026-11-26.** `assumptions_json` (fee model and params, latency distribution, drop probability, partial-fill cap, price basis, curve-layout status) on every `FillRecorded` and CONFIRMING `OrderRejected` row. Open: `signal_id` and `dataset_id` (P1-4b; `OrderRequest` is `extra="forbid"` with many callers, so it needs its own change; `decision_id` and `correlation_id` already link fill to decision and cycle) | `execution/assumptions.py`, `execution/paper_adapter/*.py`, `ledger/events.py`, `contracts/events/*.schema.json` | M | none |
+| P1-4 | **Partly done, 2026-11-26.** `assumptions_json` (fee model and params, latency distribution, drop probability, partial-fill cap, price basis, curve-layout status) on every `FillRecorded` and CONFIRMING `OrderRejected` row. `dataset_id` (P1-4b, done 2026-11-26): `dataset_digest` of the replay dataset on the same rows. Open: `signal_id` (no signal record exists in the ledger to reference yet, see D-012; `decision_id` and `correlation_id` already link fill to decision and cycle) | `execution/assumptions.py`, `execution/paper_adapter/*.py`, `ledger/events.py`, `contracts/events/*.schema.json` | M | none |
 | P1-5 | Wire `events/sources.py` (backoff, staleness, cursors) into the event-mode supervisor | `supervisor/event_desk.py` | M | none |
 | P1-6 | Calibrate REVIEW fee/latency constants against recorded live data; record the calibration dataset id | `execution/fees.py`, `execution/latency.py`, `scripts/measure_replay.py` | M | recorded data (in progress) |
 | P1-7 | Scheduled ledger backup (host cron or compose sidecar) | `docs/OPERATIONS.md`, compose | S | P0-2 |
@@ -72,6 +72,11 @@ flowchart LR
 ```
 
 ## Implemented in this increment
+
+Increment 4 (branch `bot-00-chief/p1-4b-signal-dataset`):
+
+- P1-4b `dataset_id` on fills and CONFIRMING rejections (replay only); pins re-pinned with
+  drift proven to be the new field only. `signal_id` open (D-012).
 
 Increment 3 (branch `bot-00-chief/p1-2-provenance`):
 

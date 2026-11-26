@@ -1,0 +1,41 @@
+change_id: p1-4b-dataset-id
+proposed_by: bot-00-chief
+surface: contracts/events/fill_recorded.schema.json
+surfaces:
+- contracts/events/order_rejected.schema.json
+breaking: false
+version: "1.3.0"
+previous_version: "1.2.0"
+summary: >-
+  Additive optional field dataset_id (string, default "") on FillRecorded and
+  OrderRejected: the backtest/manifest.py dataset_digest of the replay dataset
+  the row was simulated from; empty outside replay (ROADMAP P1-4b).
+reversibility: two-way
+files:
+- src/pumpgrok/ledger/events.py
+- contracts/events/fill_recorded.schema.json
+- contracts/events/order_rejected.schema.json
+rationale: >-
+  A replay fill must name the data it was simulated on. dataset_digest is the
+  digest backtest run ids already pin, so a fill joins to the backtest runs over
+  the same dataset. The field has a default, so older rows validate and no
+  reader changes. Schemas regenerated with scripts/generate-event-schemas.py.
+  New payload bytes moved the replay pins; every moved digest reproduces its
+  previous value with the field stripped (CHANGELOG).
+pending_acks:
+- bot-00-chief
+- bot-01-scout
+- bot-02-risk
+- bot-03-whale
+- bot-04-sniper
+- bot-05-rug
+- bot-06-exit
+- bot-07-shill
+- bot-08-signal
+- bot-09-journal
+acknowledgements: []
+ack_note: >-
+  Non-breaking additive field; consumer acknowledgements are informational and
+  PENDING. No consumer rejection is outstanding.
+semantic_changes: []
+migration_note: ""
