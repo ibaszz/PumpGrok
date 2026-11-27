@@ -1,0 +1,15 @@
+{
+  "dataset": "smoke-pp",
+  "recorded_from_utc": "2026-11-25T23:14:38.000000Z",
+  "recorded_to_utc": "2026-11-25T23:16:03.000004Z",
+  "seed_hint": 20260101,
+  "sources": {
+    "rpc-logs": "wss://api.mainnet-beta.solana.com",
+    "pumpportal-free": "wss://pumpportal.fun/api/data"
+  },
+  "sha256": {
+    "events.jsonl": "4bbc2ff851f2003f1b6df66e0961e278e70f11ed3a26d7817612647e43b2c9e9",
+    "creators.jsonl": "03534b19dfbd946324b20cb8a475809544dc58258e4ac5922ef6202a463749f3"
+  },
+  "notes": "Recorded from live pump.fun program logs via logsSubscribe, creators/migrations from the free PumpPortal streams. 20 mints with create evidence, 766 ticks, 6 pumpportal creates, 0 migrations."
+}

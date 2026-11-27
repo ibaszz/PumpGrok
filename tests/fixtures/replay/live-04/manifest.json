@@ -1,0 +1,13 @@
+{
+  "dataset": "live-04",
+  "recorded_from_utc": "2026-11-23T15:28:28.000000Z",
+  "recorded_to_utc": "2026-11-23T16:13:24.000000Z",
+  "seed_hint": 20260101,
+  "sources": {
+    "rpc-logs": "wss://api.mainnet-beta.solana.com"
+  },
+  "sha256": {
+    "events.jsonl": "19371a64de97786d94b1afabae2619f4d304524015537db05ad5ddf7c1264dee"
+  },
+  "notes": "Recorded from live pump.fun program logs via logsSubscribe. 20 mints with create evidence, 7599 ticks."
+}

@@ -1,0 +1,13 @@
+{
+  "dataset": "live-01thin",
+  "recorded_from_utc": "2026-11-23T15:19:23.000000Z",
+  "recorded_to_utc": "2026-11-23T15:25:46.000002Z",
+  "seed_hint": 20260101,
+  "sources": {
+    "rpc-logs": "wss://api.mainnet-beta.solana.com"
+  },
+  "sha256": {
+    "events.jsonl": "91431d6b1d7fb43ac1d76a3c8cc9683adf9f4142e276e73824eeb27698958ee2"
+  },
+  "notes": "Even-sampled to <= 12 ticks per mint from live-01 to fit the replay seat-cycle budget. Real pump.fun logs, no synthetic ticks."
+}

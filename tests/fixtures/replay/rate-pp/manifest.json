@@ -1,0 +1,16 @@
+{
+  "dataset": "rate-pp",
+  "recorded_from_utc": "2026-11-25T23:16:30.000000Z",
+  "recorded_to_utc": "2026-11-25T23:19:29.000023Z",
+  "seed_hint": 20260101,
+  "sources": {
+    "rpc-logs": "wss://api.mainnet-beta.solana.com",
+    "pumpportal-free": "wss://pumpportal.fun/api/data"
+  },
+  "sha256": {
+    "events.jsonl": "12fe5038593195db37edd9be6e189151085a67078dc7b4200afb38fa69152043",
+    "creators.jsonl": "40a0ad7def1bc4e140f22cfc27e9a73687ff894a8192b46c8690d9aa91f669a0",
+    "migrations.jsonl": "d20028446d10fe4d0c752392dd2587b45ab0671f2fcb59571d67bda823302228"
+  },
+  "notes": "Recorded from live pump.fun program logs via logsSubscribe, creators/migrations from the free PumpPortal streams. 110 mints with create evidence, 5094 ticks, 11 pumpportal creates, 3 migrations."
+}
