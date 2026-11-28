@@ -8,7 +8,7 @@ from pathlib import Path
 
 from pumpgrok.cli.errors import _say
 from pumpgrok.config.settings import Settings, state_root
-from pumpgrok.ledger.backup import backup_ledger, restore_ledger
+from pumpgrok.ledger.backup import BackupError, backup_ledger, restore_ledger
 
 
 def _ledger_verb(args: argparse.Namespace, settings: Settings) -> int:
@@ -16,7 +16,11 @@ def _ledger_verb(args: argparse.Namespace, settings: Settings) -> int:
     active = Path(getattr(args, "ledger", "var/ledger.sqlite"))
     root = state_root() or Path("var")
     if cmd == "backup":
-        dest = backup_ledger(active, root)
+        try:
+            dest = backup_ledger(active, root, keep=int(getattr(args, "keep", 7)))
+        except (BackupError, ValueError) as exc:
+            _say(sys.stderr, f"backup refused: {exc}")
+            return 1
         _say(sys.stdout, f"backup written: {dest}")
         return 0
     if cmd == "restore":

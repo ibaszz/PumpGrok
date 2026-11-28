@@ -1,6 +1,9 @@
-"""Ledger backup and verified restore (HOST-07).
+"""Ledger backup and verified restore (HOST-07, ROADMAP P1-7).
 
-``backup_ledger`` writes a copy under the state directory.
+``backup_ledger`` writes a consistent snapshot under the state directory with SQLite's
+online backup API (safe while the desk is writing: a plain file copy of a WAL database
+can miss committed rows or tear), verifies the copy's hash chain, names it by UTC time
+and keeps the newest ``keep`` snapshots.
 ``restore_ledger`` verifies the candidate hash chain before atomically
 replacing the active file; a failed verification leaves the active file
 byte-identical and is reported as failure.
@@ -11,22 +14,73 @@ from __future__ import annotations
 import logging
 import os
 import shutil
-from contextlib import suppress
+import sqlite3
+from contextlib import closing, suppress
+from datetime import UTC, datetime
 from pathlib import Path
+
+from pumpgrok.replay.clock import WallClock
 
 log = logging.getLogger("pumpgrok.ledger.backup")
 
 
+BACKUP_PREFIX = "ledger-backup-"
+DEFAULT_KEEP = 7
+
+
+class BackupError(RuntimeError):
+    """The snapshot could not be written or did not verify; nothing was kept."""
+
+
+def _drop(path: Path) -> None:
+    for candidate in (path, Path(f"{path}-wal"), Path(f"{path}-shm")):
+        candidate.unlink(missing_ok=True)
+
+
 def backup_ledger(
-    active: str | Path, state_dir: str | Path, name: str = "ledger-backup.sqlite"
+    active: str | Path,
+    state_dir: str | Path,
+    name: str | None = None,
+    *,
+    keep: int = DEFAULT_KEEP,
+    now: float | None = None,
 ) -> Path:
-    """Copy the active ledger under the state directory; returns the copy path."""
+    """Snapshot the active ledger, verify it, prune old snapshots; return the copy path."""
     src = Path(active)
+    if not src.is_file():
+        raise BackupError(f"active ledger not found: {src}")
+    if keep < 1:
+        raise ValueError("keep must be at least 1")
     dest_dir = Path(state_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
-    dest = dest_dir / name
-    shutil.copyfile(src, dest)
+    when = WallClock().now() if now is None else now
+    stamp = datetime.fromtimestamp(when, UTC).strftime("%Y%m%dT%H%M%SZ")
+    dest = dest_dir / (name or f"{BACKUP_PREFIX}{stamp}.sqlite")
+    partial = dest.with_name(dest.name + ".partial")
+    _drop(partial)
+    try:
+        with (
+            closing(sqlite3.connect(str(src))) as source,
+            closing(sqlite3.connect(str(partial))) as target,
+        ):
+            source.backup(target)
+    except sqlite3.Error as exc:
+        _drop(partial)
+        raise BackupError(f"snapshot failed: {type(exc).__name__}") from exc
+    os.replace(partial, dest)
+    if not verify_candidate(dest):
+        _drop(dest)
+        raise BackupError("snapshot failed hash-chain verification; not kept")
+    if name is None:
+        _prune(dest_dir, keep)
     return dest
+
+
+def _prune(dest_dir: Path, keep: int) -> None:
+    """Keep the newest ``keep`` timestamped snapshots (names sort by time)."""
+    snapshots = sorted(dest_dir.glob(f"{BACKUP_PREFIX}*.sqlite"))
+    for old in snapshots[:-keep]:
+        _drop(old)
 
 
 def verify_candidate(candidate: str | Path) -> bool:

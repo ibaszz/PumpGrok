@@ -16,7 +16,7 @@ Operator view of running PumpGrok. Detailed procedures live in [runbooks/](runbo
 | `uv run pumpgrok run --mode paper --live-paper --serve` | Same desk plus the PumpPortal feed loop and `/healthz` (`status=ok` only after a frame); needs `PUMPGROK_HEALTH__PORT`; SIGINT/SIGTERM stop it | 0 on stop; 1 config error without a port |
 | `uv run pumpgrok run --mode live` | Refused | 3 |
 | `uv run pumpgrok doctor` | Effective config, killswitch, v4 runtime report (read-only) | 0 |
-| `uv run pumpgrok ledger backup` | Copy of `var/ledger.sqlite` under the state directory | 0 |
+| `uv run pumpgrok ledger backup [--keep N]` | Verified, timestamped snapshot of `var/ledger.sqlite` under the state directory; keeps the newest N (default 7) | 0; 1 if the ledger is missing or the copy fails verification |
 | `uv run pumpgrok ledger restore --from <file>` | Verify hash chain, then atomically replace | 0 or 1 |
 | `make gateway` | Desk gateway (MCP per-seat) on loopback | runs |
 
@@ -87,8 +87,18 @@ No log shipping or external alert receiver is configured; the compose logging dr
   `docker compose exec pumpgrok pumpgrok ledger backup` once the service stays up).
 - Restore: stop the desk, then `uv run pumpgrok ledger restore --from <copy>`. Restore
   refuses a candidate whose hash chain fails; the active ledger is untouched in that case.
-- Nothing schedules backups. Recommended: a host cron entry running the backup daily and
-  copying the result off the host.
+- Each backup is a consistent snapshot taken with SQLite's online backup API (safe while
+  the desk writes), verified against the hash chain before it is kept, and named
+  `ledger-backup-<UTC>.sqlite` under the state directory. `--keep N` (default 7) prunes
+  older snapshots. A snapshot that fails verification is deleted and the command exits 1.
+- Schedule it on the host (P1-7). Example crontab line, daily at 03:17 UTC, two weeks kept:
+
+  ```text
+  17 3 * * * cd /srv/pumpgrok && uv run pumpgrok ledger backup --keep 14 >> var/backup.log 2>&1
+  ```
+
+  Copy the newest snapshot off the host as well; a snapshot on the same disk does not
+  survive a disk loss.
 
 ## 5. Recovery behavior
 

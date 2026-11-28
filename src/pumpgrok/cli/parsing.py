@@ -245,6 +245,9 @@ def _add_ledger(verbs: _VerbsAction, mode_option: _Parser) -> None:
     ledger_cmd = ledger.add_subparsers(dest="cmd", required=True, metavar="LEDGER")
     backup = ledger_cmd.add_parser("backup", help="write a ledger copy under the state directory")
     backup.add_argument("--ledger", default="var/ledger.sqlite", help="active ledger path")
+    backup.add_argument(
+        "--keep", type=int, default=7, help="timestamped snapshots to keep (oldest pruned)"
+    )
     restore = ledger_cmd.add_parser(
         "restore", help="verify then atomically replace the active ledger"
     )

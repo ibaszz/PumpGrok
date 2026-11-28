@@ -35,11 +35,13 @@ All notable changes to PumpGrok are recorded here. The format follows Keep a Cha
 
 ### Added
 
+- Strategy-lab metrics (P2-4, `src/pumpgrok/backtest/metrics_v2.py`): `expectancy_lamports`, `avg_win_lamports`, `avg_loss_lamports`, `median_return`, `sortino_ratio` on `MetricsV2Report` (None when undefined), and `bootstrap_mean_ci` (seeded percentile bootstrap). Not yet shown in backtest reports.
 - `run --mode paper --live-paper --serve` (P0-2b): PumpPortal feed loop with `/healthz`, places nothing (`src/pumpgrok/supervisor/live_paper_loop.py`, `src/pumpgrok/datafeed/portal_ws.py`); compose `pumpgrok-live-paper` runs it (DECISIONS D-015).
 - Momentum gate: `CurveRiseTracker` (trailing 60 s curve rise), `Token.curve_rise_60s`, `FilterSettings.min_curve_rise_60s` (off by default; `no_momentum_data` / `curve_not_rising`). `filter_settings_hash` and the filter part of `evaluated_settings_hash` now leave unset optional fields out, so replay, signal and backtest identities are unchanged. `upgrade_bounds.toml` bounds the new key to [-1.0, 10.0]; `None` (gate off) passes the bounds check. The PRE-v4 settings surface digest for `filter` was re-pinned (schema gained the field).
 
 ### Fixed
 
+- `pumpgrok ledger backup` copied the WAL-mode ledger with a plain file copy, which can miss committed rows still in the WAL or tear while the desk writes. It now takes an online SQLite snapshot, verifies its hash chain before keeping it, names it by UTC time and prunes to `--keep` (default 7) (P1-7).
 - `run --live-paper` could not start: `PUMPGROK_OD04_PROBE_REVIEW` was refused as an unknown setting, and the default `momentum_breakout` strategy was built without `breakout_bps`.
 
 - Event-source wiring (P1-5, `src/pumpgrok/events/feed_link.py`): `FeedLink` reports frames to both `SourceSupervisor` and risk `FeedHealth`; `run_feed` reconnects with backoff and held-mint resync; `build_event_desk` builds the `pumpportal` link and `EventDesk.source_states()` (DECISIONS D-014). No pin change.

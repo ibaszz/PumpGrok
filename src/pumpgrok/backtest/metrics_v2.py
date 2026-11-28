@@ -9,6 +9,8 @@ ratio is None and ``annualization_valid`` is False.
 
 from __future__ import annotations
 
+import random
+import statistics
 from collections.abc import Sequence
 from dataclasses import dataclass
 from decimal import Decimal
@@ -20,6 +22,7 @@ __all__ = [
     "ANNUALIZATION_MIN_DAYS",
     "MetricsContext",
     "MetricsV2Report",
+    "bootstrap_mean_ci",
     "summarize_v2",
 ]
 
@@ -72,6 +75,18 @@ class MetricsV2Report:
 
     realized_net_lamports: final equity minus initial equity; None with
     no fills. Inputs: final curve point and initial equity.
+
+    expectancy_lamports: mean equity step per fill (P2-4); None with no
+    fills. avg_win_lamports / avg_loss_lamports: mean winning step and
+    mean losing step magnitude; None when there is no such step.
+    median_return: median per-fill step return; None with no fills.
+
+    sortino_ratio: mean step return over downside deviation (target 0,
+    population), annualized like sharpe_ratio; None under the same
+    conditions as sharpe_ratio or when no step is negative.
+
+    These describe the realized window only. A confidence interval for
+    expectancy comes from :func:`bootstrap_mean_ci` with a seeded RNG.
     """
 
     total_return: Decimal | None
@@ -84,12 +99,62 @@ class MetricsV2Report:
     profit_factor: Decimal | None
     annualization_valid: bool
     realized_net_lamports: int | None
+    expectancy_lamports: Decimal | None = None
+    avg_win_lamports: Decimal | None = None
+    avg_loss_lamports: Decimal | None = None
+    median_return: Decimal | None = None
+    sortino_ratio: Decimal | None = None
 
 
 def _finite(value: Decimal) -> Decimal:
     if not value.is_finite():
         raise ValueError("metric is not finite")
     return value
+
+
+def _mean(values: Sequence[int]) -> Decimal | None:
+    return Decimal(sum(values)) / Decimal(len(values)) if values else None
+
+
+def _sortino_ratio(returns: Sequence[Decimal], elapsed_days: Decimal) -> Decimal | None:
+    """Annualized mean over downside deviation (target 0); None when undefined."""
+    count = len(returns)
+    if count < 2 or elapsed_days <= 0:
+        return None
+    downside = sum((min(item, Decimal(0)) ** 2 for item in returns), Decimal(0)) / Decimal(count)
+    if downside <= 0:
+        return None
+    mean = sum(returns, Decimal(0)) / Decimal(count)
+    scale = (Decimal(ANNUALIZATION_DAYS_PER_YEAR * count) / elapsed_days).sqrt()
+    return _finite(mean / downside.sqrt() * scale)
+
+
+def bootstrap_mean_ci(
+    values: Sequence[int | Decimal],
+    *,
+    rng: random.Random,
+    resamples: int = 1000,
+    level: Decimal = Decimal("0.95"),
+) -> tuple[Decimal, Decimal] | None:
+    """Percentile bootstrap interval for the mean; None with fewer than two values.
+
+    Deterministic for a seeded ``rng``. Describes uncertainty in the realized
+    sample only; it is not a forecast.
+    """
+    if len(values) < 2:
+        return None
+    if resamples < 100 or not (Decimal(0) < level < Decimal(1)):
+        raise ValueError("bootstrap needs resamples >= 100 and 0 < level < 1")
+    data = [Decimal(v) for v in values]
+    count = len(data)
+    means = sorted(
+        sum((rng.choice(data) for _ in range(count)), Decimal(0)) / Decimal(count)
+        for _ in range(resamples)
+    )
+    tail = (Decimal(1) - level) / Decimal(2)
+    low = int(tail * resamples)
+    high = min(resamples - 1, int((Decimal(1) - tail) * resamples))
+    return means[low], means[high]
 
 
 def summarize_v2(fills: Sequence[Fill], ctx: MetricsContext) -> MetricsV2Report:
@@ -160,11 +225,13 @@ def summarize_v2(fills: Sequence[Fill], ctx: MetricsContext) -> MetricsV2Report:
     )
 
     sharpe_ratio: Decimal | None = None
+    sortino_ratio: Decimal | None = None
     returns = _step_returns(ctx)
     if annualization_valid and len(returns) >= 2:
         raw = _sharpe_ratio(returns, ctx.elapsed_days)
         if raw != Decimal(0) and raw.is_finite():
             sharpe_ratio = raw
+        sortino_ratio = _sortino_ratio(returns, ctx.elapsed_days)
 
     return MetricsV2Report(
         total_return=total_return,
@@ -177,4 +244,9 @@ def summarize_v2(fills: Sequence[Fill], ctx: MetricsContext) -> MetricsV2Report:
         profit_factor=profit_factor,
         annualization_valid=annualization_valid,
         realized_net_lamports=final - initial,
+        expectancy_lamports=_mean(deltas),
+        avg_win_lamports=_mean([d for d in deltas if d > 0]),
+        avg_loss_lamports=_mean([-d for d in deltas if d < 0]),
+        median_return=statistics.median(returns),
+        sortino_ratio=sortino_ratio,
     )

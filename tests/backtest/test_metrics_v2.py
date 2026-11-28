@@ -7,8 +7,9 @@ from decimal import Decimal
 import pytest
 
 from pumpgrok.backtest.metrics import MetricsContext
-from pumpgrok.backtest.metrics_v2 import summarize_v2
+from pumpgrok.backtest.metrics_v2 import bootstrap_mean_ci, summarize_v2
 from pumpgrok.core.adapter import Fill, FillStatus
+from pumpgrok.replay.rng import make_rng
 
 _ULID_CANON = "01ARZ3NDEKTSV4RRFFQ69G5FAV"
 
@@ -128,3 +129,40 @@ def test_determinism() -> None:
     fills = [_fill(1, 1_000), _fill(2, 2_000)]
     ctx = _ctx(10_000, (10_050, 10_300), Decimal("10"))
     assert summarize_v2(fills, ctx) == summarize_v2(fills, ctx)
+
+
+def test_lab_metrics_p2_4() -> None:
+    """P2-4: expectancy, average win/loss, median return, Sortino on the same curve."""
+    fills = [_fill(1, 1_000), _fill(2, 2_000), _fill(3, 1_500)]
+    ctx = _ctx(10_000, (10_100, 10_050, 10_300), Decimal("10"))
+    report = summarize_v2(fills, ctx)
+    # Steps: +100, -50, +250.
+    assert report.expectancy_lamports == Decimal(100)
+    assert report.avg_win_lamports == Decimal(175)
+    assert report.avg_loss_lamports == Decimal(50)
+    assert report.median_return == Decimal(100) / Decimal(10_000)
+    assert report.sortino_ratio is not None and report.sortino_ratio > 0
+
+
+def test_sortino_is_none_without_losing_steps_or_short_windows() -> None:
+    fills = [_fill(1, 1_000), _fill(2, 2_000)]
+    rising = summarize_v2(fills, _ctx(10_000, (10_100, 10_200), Decimal("10")))
+    assert rising.sortino_ratio is None
+    assert rising.avg_loss_lamports is None
+    short = summarize_v2(fills, _ctx(10_000, (10_100, 10_000), Decimal("1")))
+    assert short.sortino_ratio is None
+
+
+def test_bootstrap_ci_is_seeded_and_brackets_the_mean() -> None:
+    steps = [100, -50, 250, 30, -10, 80]
+    first = bootstrap_mean_ci(steps, rng=make_rng(7))
+    again = bootstrap_mean_ci(steps, rng=make_rng(7))
+    assert first == again
+    assert first is not None
+    low, high = first
+    mean = Decimal(sum(steps)) / Decimal(len(steps))
+    assert low <= mean <= high
+    assert low < high
+    assert bootstrap_mean_ci([5], rng=make_rng(7)) is None
+    with pytest.raises(ValueError, match="resamples"):
+        bootstrap_mean_ci(steps, rng=make_rng(7), resamples=10)
