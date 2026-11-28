@@ -166,9 +166,11 @@ def filter_settings_hash(settings: FilterSettings) -> str:
 
     Settings thresholds are floats by definition, so this hash uses plain
     JSON rather than canonical_json, which forbids float leaves. The output
-    is deterministic for identical settings on any host.
+    is deterministic for identical settings on any host. Unset optional gates (``None``)
+    are left out, so adding an off-by-default gate does not change existing hashes.
     """
-    raw = json.dumps(settings.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
+    body = settings.model_dump(mode="json", exclude_none=True)
+    raw = json.dumps(body, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 

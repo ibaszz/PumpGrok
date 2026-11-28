@@ -272,7 +272,8 @@ def _nested_model(annotation: Any) -> type[BaseModel] | None:
 # PUMPGROK_PAID_RPC_PROVIDER by the safety provider (env-only and optional:
 # unset or empty means no paid RPC provider is recorded),
 # PUMPGROK_STATE_DIR by the hosted state directory (HOST-01: absolute only),
-# PUMPGROK_LOG_LEVEL by the log config (HOST-08: DEBUG|INFO|WARNING|ERROR).
+# PUMPGROK_LOG_LEVEL by the log config (HOST-08: DEBUG|INFO|WARNING|ERROR),
+# PUMPGROK_OD04_PROBE_REVIEW by the live-data paper gate (cli/verbs_state.py, D-008).
 NON_SETTING_ENV_NAMES = frozenset(
     {
         "PUMPGROK_PROFILE",
@@ -285,6 +286,7 @@ NON_SETTING_ENV_NAMES = frozenset(
         "PUMPGROK_PAID_RPC_PROVIDER",
         "PUMPGROK_STATE_DIR",
         "PUMPGROK_LOG_LEVEL",
+        "PUMPGROK_OD04_PROBE_REVIEW",
     }
 )
 

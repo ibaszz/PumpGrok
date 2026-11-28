@@ -6,9 +6,9 @@
 #                                                 # recorded dataset in a loop and
 #                                                 # serves /healthz and /metrics
 #   PUMPGROK_OD04_PROBE_REVIEW=approved docker compose --profile live-paper run --rm pumpgrok-live-paper
-#                                                 # live-data paper root (builds, places
-#                                                 # nothing, exits); set the flag only
-#                                                 # after the OD-04 probe review
+#                                                 # live-data paper loop: PumpPortal feed +
+#                                                 # /healthz, places nothing; set the flag
+#                                                 # only after the OD-04 probe review
 #   docker compose run --rm pumpgrok run --mode paper --once --replay tests/fixtures/replay/smoke
 #                                                 # Phase 1 criterion 4 one-shot
 #
@@ -68,8 +68,9 @@ services:
       resources:
         limits:
           memory: 512M
-  # Live-data paper root (HOST-16), opt-in. `run --live-paper` builds the desk, places
-  # nothing and exits, so it has no port, no healthcheck and no restart. The OD-04 review
+  # Live-data paper loop (HOST-16, P0-2b), opt-in. `run --live-paper --serve` reads the
+  # public PumpPortal stream and serves /healthz inside the container; it places nothing
+  # (`_no_place`). No published port and no restart: an operator starts and stops it. The OD-04 review
   # flag is never committed: it is read from the operator's shell at `docker compose run`
   # time and defaults to empty, which the CLI refuses (docs/SECURITY_AUDIT.md S-01).
   pumpgrok-live-paper:
@@ -84,14 +85,23 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
-    command: ["run", "--mode", "paper", "--live-paper"]
+    command: ["run", "--mode", "paper", "--live-paper", "--serve"]
     environment:
       PUMPGROK_PROFILE: "${PUMPGROK_PROFILE:-paper}"
       PUMPGROK_OD04_PROBE_REVIEW: "${PUMPGROK_OD04_PROBE_REVIEW:-}"
+      PUMPGROK_HEALTH__HOST: "127.0.0.1"   # container-internal probe only; no published port
+      PUMPGROK_HEALTH__PORT: "8081"
     secrets:
       - pumpgrok_env
     volumes:
       - pumpgrok-state:/app/var
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,urllib.request;urllib.request.urlopen('http://127.0.0.1:' + os.environ.get('PUMPGROK_HEALTH__PORT', '8081') + '/healthz', timeout=4)"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 60s
     restart: "no"
 
   # Desk gateway (TOOL-010): the MCP JSON-RPC projection over the paper registry, served by

@@ -51,8 +51,10 @@ flowchart LR
   MK --> LED[(var/ledger.sqlite)]
 ```
 
-Today `place` is `_no_place` in `cli/verbs_state.py`: the desk is composed, then the command
-returns. A source with no transport yields stale, never invented, ticks
+Today `place` is `_no_place` in `cli/verbs_state.py`. Without `--serve` the desk is composed,
+then the command returns. With `--serve` (P0-2b, `supervisor/live_paper_loop.py`) the
+PumpPortal transport (`datafeed/portal_ws.py`) feeds `PortalFeed` through `run_feed`; feed
+events are counted and reported on `/healthz`, not traded. A source with no transport yields stale, never invented, ticks
 (`datafeed/fallback.py`).
 
 Event-mode source wiring (P1-5, `events/feed_link.py`): a datafeed adapter reports to a

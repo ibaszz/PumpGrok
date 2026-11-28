@@ -39,6 +39,11 @@ max = 100.0
 min = false
 max = true
 
+# Momentum gate: trailing 60 s curve rise as a fraction. Unset (None) turns the gate off.
+[filter.min_curve_rise_60s]
+min = -1.0
+max = 10.0
+
 [filter.forget_creators_after_days]
 min = 0.0
 max = 365.0

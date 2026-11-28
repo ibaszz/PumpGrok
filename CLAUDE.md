@@ -106,7 +106,7 @@ Assumptions and path differences the reader must not mistake for verified fact.
 - Curve decoding uses the `[ASSUMED]` layout in `src/pumpgrok/tools/onchain/curve_layout.py` until a live probe confirms it (see `scripts/probe_curve_layout.py`).
 - `run --once --replay` exercises the `PaperAdapter` path via `run_once_replay` in `src/pumpgrok/supervisor/scheduler/serve.py`, while `run_replay` in `src/pumpgrok/replay/runner.py` writes the checkpoint verdict row first and does not run the paper adapter.
 - `run --duration` is not implemented and exits `EXIT_NOT_IMPLEMENTED` (`src/pumpgrok/cli/codes.py`) from `_run_outcome` in `src/pumpgrok/cli/verbs_state.py`.
-- `run --live-paper` requires `PUMPGROK_OD04_PROBE_REVIEW=approved` and its place callback is the `_no_place` stub; in compose it runs only as the opt-in `pumpgrok-live-paper` service (profile `live-paper`), with the flag taken from the operator's shell (`docs/DECISIONS.md` D-008).
+- `run --live-paper` requires `PUMPGROK_OD04_PROBE_REVIEW=approved` and its place callback is the `_no_place` stub; without `--serve` it builds and exits, with `--serve` (and `PUMPGROK_HEALTH__PORT`) it runs the PumpPortal feed loop with `/healthz` (`supervisor/live_paper_loop.py`); in compose it runs only as the opt-in `pumpgrok-live-paper` service (profile `live-paper`), with the flag taken from the operator's shell (`docs/DECISIONS.md` D-008).
 
 ## v4 event mode
 

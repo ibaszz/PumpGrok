@@ -12,7 +12,8 @@ Operator view of running PumpGrok. Detailed procedures live in [runbooks/](runbo
 |---------|--------------|-------|
 | `uv run pumpgrok run --mode paper --once --replay tests/fixtures/replay/smoke` | One replay cycle; ledger under `var/replay/<dataset>/` | 0 |
 | `uv run pumpgrok run --mode paper --serve --replay <dir>` | Replay loop with `/healthz`, `/metrics` | runs |
-| `uv run pumpgrok run --mode paper --live-paper` | Composes live-data paper desk; places nothing today; needs `PUMPGROK_OD04_PROBE_REVIEW=approved` | 0 after build |
+| `uv run pumpgrok run --mode paper --live-paper` | Composes live-data paper desk; places nothing today; needs `PUMPGROK_OD04_PROBE_REVIEW=approved` and the paper onboarding inputs | 0 after build |
+| `uv run pumpgrok run --mode paper --live-paper --serve` | Same desk plus the PumpPortal feed loop and `/healthz` (`status=ok` only after a frame); needs `PUMPGROK_HEALTH__PORT`; SIGINT/SIGTERM stop it | 0 on stop; 1 config error without a port |
 | `uv run pumpgrok run --mode live` | Refused | 3 |
 | `uv run pumpgrok doctor` | Effective config, killswitch, v4 runtime report (read-only) | 0 |
 | `uv run pumpgrok ledger backup` | Copy of `var/ledger.sqlite` under the state directory | 0 |
@@ -25,8 +26,8 @@ refuses with the list of missing inputs.
 ## 2. Docker Compose
 
 Services in `docker-compose.yml`: `pumpgrok` (default; `run --serve --replay` on the smoke
-fixture, `/healthz` on 127.0.0.1:8080), `pumpgrok-live-paper` (profile `live-paper`, one-shot,
-no restart), `desk-gateway`. All three: read-only rootfs, `tmpfs /tmp`, `cap_drop: ALL`,
+fixture, `/healthz` on 127.0.0.1:8080), `pumpgrok-live-paper` (profile `live-paper`, `--live-paper --serve` loop,
+container-internal `/healthz` on 8081, no published port, no restart), `desk-gateway`. All three: read-only rootfs, `tmpfs /tmp`, `cap_drop: ALL`,
 `no-new-privileges`, loopback-only published ports, state on the `pumpgrok-state` volume.
 
 ### Required before `docker compose up`

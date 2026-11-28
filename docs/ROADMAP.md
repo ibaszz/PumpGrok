@@ -10,12 +10,12 @@ yes before implementation.
 
 | ID | Item | Files | Size | Depends on | Approval | Acceptance |
 |----|------|-------|------|------------|----------|------------|
-| P0-1 | Remove `PUMPGROK_OD04_PROBE_REVIEW: "approved"` from compose; document setting it in the secret env file after review | `docker-compose.yml`, `docs/OPERATIONS.md` | S | none | Yes | compose default service refuses live-paper until the operator sets the flag |
-| P0-2 | Make the default compose service long-running: either point it at `--serve --replay` or give `--live-paper` a loop that binds the health port | `docker-compose.yml` or `cli/verbs_state.py`, `supervisor/live_paper.py` | S (compose) / M (loop) | P0-1 | Yes | healthcheck passes; no restart loop |
-| P0-3 | Commit or drop the untracked WIP: fix ruff findings in four scripts; implement `CurveRiseTracker` or remove `tests/engine/test_momentum_gate.py` | `scripts/*.py`, `src/pumpgrok/engine/pipeline.py` | S-M | owner's intent | No | `make check` green on a clean clone |
-| P0-4 | Decide large fixtures (`live-06/07/08`, 1.1 GB total): git-ignore, move under `var/recordings/`, or LFS | `.gitignore` | S | none | Owner choice | no fixture over 10 MB tracked without LFS |
-| P0-5 | Remove duplicated stale lines from `README.md`, `ARCHITECTURE.md`, `CLAUDE.md` | those files | S | none | No | each statement appears once and matches code |
-| P0-6 | `.env` permission check in `pumpgrok doctor` (warn on group/world bits) | `src/pumpgrok/doctor.py` | S | none | No | doctor prints a warning for mode 664; test covers it |
+| P0-1 | **Done, 2026-11-26.** Remove `PUMPGROK_OD04_PROBE_REVIEW: "approved"` from compose; document setting it in the secret env file after review | `docker-compose.yml`, `docs/OPERATIONS.md` | S | none | Yes | compose default service refuses live-paper until the operator sets the flag |
+| P0-2 | **Done, 2026-11-28** (compose option 2026-11-26; live-paper loop P0-2b 2026-11-28; feed events are not yet traded). Make the default compose service long-running: either point it at `--serve --replay` or give `--live-paper` a loop that binds the health port | `docker-compose.yml` or `cli/verbs_state.py`, `supervisor/live_paper.py` | S (compose) / M (loop) | P0-1 | Yes | healthcheck passes; no restart loop |
+| P0-3 | **Partly done, 2026-11-28.** WIP committed by the owner (`f0abf80`); `CurveRiseTracker` and the momentum gate implemented. Open: 27 ruff findings in the four owner scripts. Commit or drop the untracked WIP: fix ruff findings in four scripts; implement `CurveRiseTracker` or remove `tests/engine/test_momentum_gate.py` | `scripts/*.py`, `src/pumpgrok/engine/pipeline.py` | S-M | owner's intent | No | `make check` green on a clean clone |
+| P0-4 | **Done, 2026-11-26.** Decide large fixtures (`live-06/07/08`, 1.1 GB total): git-ignore, move under `var/recordings/`, or LFS | `.gitignore` | S | none | Owner choice | no fixture over 10 MB tracked without LFS |
+| P0-5 | **Done, 2026-11-26.** Remove duplicated stale lines from `README.md`, `ARCHITECTURE.md`, `CLAUDE.md` | those files | S | none | No | each statement appears once and matches code |
+| P0-6 | **Done, 2026-11-26.** `.env` permission check in `pumpgrok doctor` (warn on group/world bits) | `src/pumpgrok/doctor.py` | S | none | No | doctor prints a warning for mode 664; test covers it |
 
 ## P1: data quality, reliability, paper realism
 
@@ -72,6 +72,15 @@ flowchart LR
 ```
 
 ## Implemented in this increment
+
+Increment 7 (branch `bot-00-chief/p1-5-event-sources`, after owner commit `f0abf80`):
+
+- P0-2b: `run --live-paper --serve` loop (`supervisor/live_paper_loop.py`, PumpPortal
+  transport `datafeed/portal_ws.py`), compose service runs it; fixed two blockers that kept
+  `run --live-paper` from ever starting (OD-04 flag refused as an unknown setting; no
+  `breakout_bps` for the default strategy).
+- P0-3: `CurveRiseTracker` and the momentum gate (off by default; wired into replay candidate
+  evaluation; `filter_settings_hash` leaves unset optional gates out, so no hash moved).
 
 Increment 6 (branch `bot-00-chief/p1-5-event-sources`):
 

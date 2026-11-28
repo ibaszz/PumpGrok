@@ -53,6 +53,7 @@ class Token(BaseModel):
     curve_progress: float = 0.0  # 0..1, share of the curve already bought
     market_cap_sol: int = 0  # lamports (INT-01: integer money)
     sol_in_curve: int = 0  # lamports (INT-01: integer money)
+    curve_rise_60s: float | None = None  # trailing 60 s reserve rise; None = no history
 
     def age_seconds(self, now: float) -> float:
         if not self.created_timestamp:

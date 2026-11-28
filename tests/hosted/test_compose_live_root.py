@@ -1,8 +1,8 @@
 """HOST-16 as amended 2026-11-26 (docs/DECISIONS.md D-008).
 
 The default desk service serves the replay loop so its /healthz probe can pass; the
-live-data paper root is opt-in under the ``live-paper`` profile, never restarts, and
-its OD-04 review flag is never committed as ``approved``.
+live-data paper loop (P0-2b) is opt-in under the ``live-paper`` profile, never restarts,
+publishes no port, and its OD-04 review flag is never committed as ``approved``.
 """
 
 from __future__ import annotations
@@ -31,10 +31,12 @@ def test_live_paper_root_is_opt_in_profile() -> None:
     assert live["profiles"] == ["live-paper"]
     assert "--live-paper" in _command("pumpgrok-live-paper")
     assert "--replay" not in _command("pumpgrok-live-paper")
-    # The root exits after building; a restart policy would loop it.
+    assert "--serve" in _command("pumpgrok-live-paper")
+    # Operator-started: no restart loop, and /healthz stays inside the container.
     assert str(live["restart"]) == "no"
     assert "ports" not in live
-    assert "healthcheck" not in live
+    assert live["environment"]["PUMPGROK_HEALTH__HOST"] == "127.0.0.1"
+    assert "healthz" in " ".join(live["healthcheck"]["test"])
 
 
 def test_od04_review_never_committed_as_approved() -> None:

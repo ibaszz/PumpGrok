@@ -25,6 +25,8 @@ class FilterSettings(BaseModel):
     rug_loss_pct: float = Field(default=60.0, ge=0)
     one_position_per_creator: bool = True
     forget_creators_after_days: float = Field(default=30.0, ge=0)
+    # Momentum gate: minimum trailing 60 s curve rise; None turns the gate off.
+    min_curve_rise_60s: float | None = None
 
 
 class ScoringWeights(BaseModel):

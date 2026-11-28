@@ -124,6 +124,8 @@ def load_bounds(path: Path | str | None = None) -> Bounds:
 
 def _check_value(label: str, key: str, value: Any, bound: KeyBound) -> None:
     """Reject one value that its bound does not admit (bool or number)."""
+    if value is None:
+        return  # an unset optional gate (e.g. filter.min_curve_rise_60s) is off, not a value
     if isinstance(bound.minimum, bool):
         if not isinstance(value, bool):
             raise OutOfBoundsError(

@@ -160,3 +160,19 @@ supervisor's backoff, anything else propagates rather than retrying forever. The
 stale required feed degrades, and only live mode fails closed (RSK-03).
 Consequence: once a process runs the event desk with a transport (P0-2b), feed silence
 reaches `RiskEngine.check` with no further wiring.
+
+## D-015 The live-paper loop observes; it does not trade
+
+Context: P0-2b. `run --live-paper` built its desk and exited, and in practice never started:
+settings refused `PUMPGROK_OD04_PROBE_REVIEW` as an unknown `PUMPGROK_*` name, and the
+default strategy was built without its required `breakout_bps`.
+Decision: the OD-04 flag joins `NON_SETTING_ENV_NAMES`; the CLI passes `breakout_bps=100`
+(the backtest default). `--serve` runs `serve_live_paper`: PumpPortal transport ->
+`PortalFeed` -> `FeedLink` -> `run_feed`, plus `/healthz` and `/readyz`. Health is `ok` only
+after a real frame (the source supervisor alone calls a never-framed source live). Feed
+events are counted, not routed into strategies, and `place` stays `_no_place`: routing
+feed events into strategies and intents is the next step and needs its own review. The
+transport drops any message that is not a JSON object with a known `txType` and a mint, and
+subscribes only through the read-only allowlist. Compose runs the loop under the opt-in
+profile with a container-internal health port and no restart.
+Consequence: the live-data path can now be exercised end to end without any order path.

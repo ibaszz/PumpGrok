@@ -134,6 +134,13 @@ def _live_paper_outcome(args: argparse.Namespace, settings: Settings) -> int:
     from pumpgrok.replay.clock import WallClock  # noqa: PLC0415
     from pumpgrok.supervisor.live_paper import build_live_paper  # noqa: PLC0415
 
+    port = health_port(settings)
+    if getattr(args, "serve", False) and port <= 0:
+        _say(
+            sys.stderr,
+            "run --live-paper --serve needs a nonzero health port: set PUMPGROK_HEALTH__PORT",
+        )
+        return EXIT_CONFIG
     store = LedgerStore("var/ledger.sqlite")
     try:
         desk = build_live_paper(
@@ -141,8 +148,12 @@ def _live_paper_outcome(args: argparse.Namespace, settings: Settings) -> int:
             store=store,
             clock=WallClock(),
             place=_no_place,
+            # Same default as backtest/strategy_run.py; places nothing while place is _no_place.
+            params={"momentum_breakout": {"breakout_bps": 100}},
         )
         _say(sys.stdout, f"live-paper desk up (paper only): {desk.mode}")
+        if getattr(args, "serve", False):
+            return _serve_live_paper_loop(desk, settings, port)
     except Exception as exc:
         _say(sys.stderr, f"live-paper root refused: {type(exc).__name__}")
         return EXIT_NOT_IMPLEMENTED
@@ -150,6 +161,23 @@ def _live_paper_outcome(args: argparse.Namespace, settings: Settings) -> int:
         with contextlib.suppress(Exception):
             store._db.close()
     return EXIT_OK
+
+
+def _serve_live_paper_loop(desk: Any, settings: Settings, port: int) -> int:
+    """P0-2b: long-running feed plus /healthz; still places nothing (``_no_place``)."""
+    from pumpgrok.datafeed.portal_ws import portal_connect  # noqa: PLC0415
+    from pumpgrok.supervisor.live_paper_loop import serve_live_paper  # noqa: PLC0415
+
+    return asyncio.run(
+        serve_live_paper(
+            desk,
+            connect=portal_connect(),
+            sidecar_path=Path(settings.datafeed.feed_state_dir) / "pumpportal-sidecar.sqlite",
+            host=settings.health.host,
+            port=port,
+            rate_limit_per_10s=settings.datafeed.rate_limit_per_10s,
+        )
+    )
 
 
 def _run(args: argparse.Namespace, settings: Settings) -> int:

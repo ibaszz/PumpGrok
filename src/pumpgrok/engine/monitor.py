@@ -126,6 +126,17 @@ def parse_create_event(payload: dict[str, Any], now: float) -> Token | None:
         return None
 
 
+def _momentum_refusal(token: Token, cfg: FilterSettings) -> str | None:
+    """Momentum gate; fails closed: an enabled gate never admits an unmeasured token."""
+    if cfg.min_curve_rise_60s is None:
+        return None
+    if token.curve_rise_60s is None:
+        return "no_momentum_data"
+    if token.curve_rise_60s < cfg.min_curve_rise_60s:
+        return "curve_not_rising"
+    return None
+
+
 def passes_filter(token: Token, cfg: FilterSettings, now: float) -> tuple[bool, str]:
     """Base filter. Returns (passed, reason for rejection or "ok").
 
@@ -144,7 +155,8 @@ def passes_filter(token: Token, cfg: FilterSettings, now: float) -> tuple[bool, 
         return False, "data_unavailable"
     if token.unique_buyers < cfg.min_unique_buyers:
         return False, "few_buyers"
-    return True, "ok"
+    momentum = _momentum_refusal(token, cfg)
+    return momentum is None, momentum or "ok"
 
 
 class LaunchMonitor:

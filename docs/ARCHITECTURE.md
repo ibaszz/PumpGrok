@@ -89,7 +89,8 @@ Notes on the diagram:
 
 - `run --mode paper --once --replay <dir>` and `run --serve --replay <dir>` drive the
   supervisor on a `FixtureClock`. `run --live-paper` composes the live datafeed into a
-  paper desk (`supervisor/live_paper.py`) but currently places nothing (`_no_place`).
+  paper desk (`supervisor/live_paper.py`) but currently places nothing (`_no_place`);
+  `--serve` keeps it running on the PumpPortal feed with `/healthz` (P0-2b).
 - The live adapter exists but every path to it passes `LiveGate`, and `run --mode live`
   exits 3.
 - `events/sources.py` (backoff, staleness, cursors) is wired into the event desk through

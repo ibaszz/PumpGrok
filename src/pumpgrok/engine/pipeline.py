@@ -36,6 +36,36 @@ BUY = "buy"
 DATA_UNAVAILABLE = "data_unavailable"
 
 
+#: Momentum window for :class:`CurveRiseTracker`, seconds.
+RISE_WINDOW_S = 60.0
+
+
+class CurveRiseTracker:
+    """Trailing curve rise per mint: reserves now over reserves one window ago, minus 1.
+
+    The baseline is the latest tick at least ``RISE_WINDOW_S`` old, so a rise is only
+    reported once history reaches the window edge. Non-positive reserves are unknown
+    and are not recorded.
+    """
+
+    def __init__(self, window_s: float = RISE_WINDOW_S) -> None:
+        self._window_s = window_s
+        self._ticks: dict[str, list[tuple[float, int]]] = {}
+
+    def observe(self, mint: str, ts: float, reserves: int) -> float | None:
+        if reserves <= 0:
+            return None
+        ticks = self._ticks.setdefault(mint, [])
+        ticks.append((ts, reserves))
+        edge = ts - self._window_s
+        older = [i for i, (at, _) in enumerate(ticks) if at <= edge]
+        if not older:
+            return None
+        # Keep the baseline and everything newer; drop ticks no later window can use.
+        del ticks[: older[-1]]
+        return reserves / ticks[0][1] - 1.0
+
+
 @dataclass(frozen=True)
 class EngineDecision:
     """One replay verdict: skip or buy, the filter reason, and the mint."""
@@ -110,9 +140,13 @@ def evaluate_candidates(
 ) -> list[CandidateVerdict]:
     """Judge every tick as its own candidate, at that tick's own time, in stored order."""
     verdicts: list[CandidateVerdict] = []
+    rises = CurveRiseTracker()
     for event in events:
         ts = parse_ts_utc(str(event["ts_utc"]))
         token = tick_to_candidate(event)
+        rise = rises.observe(token.mint, ts, token.sol_in_curve)
+        if rise is not None:
+            token = token.model_copy(update={"curve_rise_60s": rise})
         verdicts.append(
             CandidateVerdict(ts=ts, token=token, verdict=decide_token(token, filter_cfg, ts))
         )

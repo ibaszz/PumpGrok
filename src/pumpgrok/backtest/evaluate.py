@@ -192,7 +192,8 @@ def evaluated_settings_hash(
     """
     payload = {
         "exits": params.exits_settings().model_dump(mode="json"),
-        "filter": params.filter_settings().model_dump(mode="json"),
+        # Unset optional gates are left out, matching manifest.filter_settings_hash.
+        "filter": params.filter_settings().model_dump(mode="json", exclude_none=True),
         "limits": _effective_limits(limits).model_dump(mode="json"),
         "risk_budget": _effective_budget(risk_budget).model_dump(mode="json"),
     }
